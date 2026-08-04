@@ -1,6 +1,6 @@
-# Gülheda Kızılhan — Kişisel Portfolyo
+# Ömer Faruk Gündüz — Kişisel Portfolyo
 
-Elektrik-Elektronik Mühendisliği kimliğini yansıtan, koyu temalı, premium bir kişisel portfolyo sitesi. İmza detayı: gerçek PCB topolojisinden esinlenen, fare ile etkileşimli, Canvas tabanlı arka plan.
+Aviyonik sistemler ve PCB tasarımı odaklı bir Elektrik-Elektronik Mühendisliği öğrencisinin koyu temalı, premium kişisel portfolyo sitesi. İmza detayı: gerçek PCB topolojisinden esinlenen, fare ile etkileşimli, Canvas tabanlı arka plan.
 
 ## Teknolojiler
 
@@ -36,5 +36,5 @@ npm run build  # üretim derlemesi
 ## Özelleştirme
 
 - İçerik: `src/data/` (site bilgileri, yetkinlikler, projeler, zaman çizelgeleri)
-- `public/cv.pdf` dosyasını kendi CV'nizle değiştirin
+- CV: `public/cv.pdf`
 - Renk paleti: `tailwind.config.ts`

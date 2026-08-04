@@ -11,7 +11,7 @@ export default function Projects() {
       <SectionHeading
         eyebrow="03 — Projeler"
         title="Seçili çalışmalar"
-        description="Fikirden şematiğe, şematikten çalışan prototipe taşıdığım projeler."
+        description="Yarışma pistinden sahaya: tasarlayıp entegre ettiğim ve bizzat uçurduğum aviyonik sistemler."
       />
       <div className="grid gap-6 md:grid-cols-2">
         {projects.map((project, i) => (
@@ -24,6 +24,7 @@ export default function Projects() {
                 <h3 className="text-lg font-medium tracking-tight text-zinc-50">
                   {project.title}
                 </h3>
+                <p className="mt-1 text-xs leading-relaxed text-accent/80">{project.role}</p>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-zinc-400">
                   {project.description}
                 </p>
@@ -37,27 +38,32 @@ export default function Projects() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-6 flex items-center gap-5 border-t border-subtle pt-4">
-                  <a
-                    href={project.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
-                  >
-                    <Github size={15} />
-                    GitHub
-                  </a>
-                  {project.demo && (
-                    <a
-                      href={project.demo}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-accent"
-                    >
-                      <ExternalLink size={15} />
-                      Canlı Demo
-                    </a>
-                  )}
+                <div className="mt-6 flex items-center justify-between gap-5 border-t border-subtle pt-4">
+                  <span className="font-mono text-xs text-zinc-500">{project.period}</span>
+                  <div className="flex items-center gap-5">
+                    {project.github && (
+                      <a
+                        href={project.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
+                      >
+                        <Github size={15} />
+                        GitHub
+                      </a>
+                    )}
+                    {project.demo && (
+                      <a
+                        href={project.demo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-accent"
+                      >
+                        <ExternalLink size={15} />
+                        Canlı Demo
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </article>

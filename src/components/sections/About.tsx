@@ -1,23 +1,23 @@
-import { CircuitBoard, Cpu, Waves } from "lucide-react";
+import { CircuitBoard, Plane, Radio } from "lucide-react";
 import Section from "@/components/ui/Section";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
 
 const focusAreas = [
   {
-    icon: Cpu,
-    title: "Gömülü Sistemler",
-    text: "STM32 ve ESP32 üzerinde bare-metal ve RTOS tabanlı firmware geliştirme.",
+    icon: Plane,
+    title: "Aviyonik Entegrasyon",
+    text: "Uçuş bilgisayarı, güç ve haberleşme alt sistemlerinin uçtan uca entegrasyonu; montaj, lehimleme ve saha testleri.",
   },
   {
     icon: CircuitBoard,
-    title: "PCB Tasarımı",
-    text: "Şematikten üretime; sinyal bütünlüğü ve EMC gözetilerek kart tasarımı.",
+    title: "PCB & Güç Dağıtımı",
+    text: "Autodesk Eagle ile uçuş bilgisayarı ve güç kartı tasarımı; datasheet analiziyle komponent seçimi.",
   },
   {
-    icon: Waves,
-    title: "Güç & Sinyal",
-    text: "Anahtarlamalı güç dönüştürücüleri ve sayısal sinyal işleme uygulamaları.",
+    icon: Radio,
+    title: "Otonom & Sürü Sistemler",
+    text: "ArduPilot ve MAVLink ile çoklu İHA senkronizasyonu, RF telemetri ve haberleşme altyapıları.",
   },
 ];
 
@@ -26,25 +26,28 @@ export default function About() {
     <Section id="hakkimda">
       <SectionHeading
         eyebrow="01 — Hakkımda"
-        title="Devre şemasıyla düşünen bir mühendis"
+        title="Aviyonikle düşünen, sahada uçuran bir mühendis adayı"
       />
       <div className="grid gap-12 lg:grid-cols-5">
         <Reveal className="lg:col-span-3">
           <div className="space-y-5 text-base leading-relaxed text-zinc-400">
             <p>
-              Elektrik-Elektronik Mühendisliği öğrencisiyim. Elektroniğe olan ilgim,
-              çocuklukta söktüğüm cihazların içindeki yeşil kartların nasıl çalıştığını
-              merak etmemle başladı; bugün o kartları kendim tasarlıyorum.
+              Balıkesir Üniversitesi Elektrik-Elektronik Mühendisliği 3. sınıf
+              öğrencisiyim. Aviyonik sistemler ve PCB tasarımı üzerine çalışıyorum;
+              Teknofest İHA Yarışması&apos;nda elektronik alt sistem ekibini yönetiyor,
+              güç dağıtım ağını tasarlıyor ve RF haberleşme altyapısını kuruyorum.
             </p>
             <p>
-              Donanım ile yazılımın kesiştiği yerde çalışmayı seviyorum: bir sensörün
-              analog dünyasından gelen sinyali koşullamak, mikrodenetleyicide işlemek ve
-              anlamlı veriye dönüştürmek — uçtan uca bu zincirin her halkasında üretken
-              olmayı hedefliyorum.
+              Tusmec&apos;te sürü İHA entegrasyonu ve prototip uçuş testlerinde görev
+              aldım: Autodesk Eagle ile PCB tasarladım, motor-pervane kombinasyonlarını
+              optimize ettim ve test uçuşlarını pilot olarak bizzat gerçekleştirdim.
+              Donanım entegrasyonundan saha testine kadar tüm aviyonik süreçleri
+              yürütmek, işin en sevdiğim tarafı.
             </p>
             <p>
-              Boş zamanlarımda açık kaynak donanım projelerini inceliyor, lehim istasyonumun
-              başında prototip üretiyor ve güç elektroniği üzerine literatür okuyorum.
+              Bir sistemin datasheet&apos;inden başlayıp şematiğine, kartına, montajına
+              ve nihayet gökyüzündeki ilk uçuşuna kadar her aşamasında olmak — benim
+              için mühendisliğin tam karşılığı bu.
             </p>
           </div>
         </Reveal>

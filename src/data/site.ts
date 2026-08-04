@@ -1,14 +1,15 @@
 export const site = {
-  name: "Gülheda Kızılhan",
-  handle: "gulheda.kizilhan",
-  title: "Elektrik-Elektronik Mühendisi",
+  name: "Ömer Faruk Gündüz",
+  handle: "omerfaruk.gunduz",
+  title: "Aviyonik Sistemler & PCB Tasarımı",
   tagline:
-    "Gömülü sistemler, PCB tasarımı ve güç elektroniği üzerine çalışan; fikirleri şematikten çalışan donanıma taşıyan bir mühendis adayı.",
-  email: "kizilhangulheda@gmail.com",
-  github: "https://github.com/gulheda",
-  linkedin: "https://www.linkedin.com/in/gulheda-kizilhan",
+    "Teknofest İHA takımında elektronik alt sistem ekibini yöneten; güç dağıtımından RF haberleşmeye, aviyonik sistemleri tasarlayıp sahada uçuran bir Elektrik-Elektronik Mühendisliği öğrencisi.",
+  email: "omerfarukgunduz5@gmail.com",
+  phone: "0546 816 77 27",
+  phoneHref: "tel:+905468167727",
+  linkedin: "https://www.linkedin.com/in/farukomergunduz",
   cvUrl: "/cv.pdf",
-  location: "Türkiye",
+  location: "Balıkesir, Türkiye",
 } as const;
 
 export const navLinks = [

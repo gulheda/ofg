@@ -1,49 +1,42 @@
-export type ProjectVisual = "mcu" | "power" | "sensor" | "signal";
+export type ProjectVisual = "uav" | "cansat" | "swarm";
 
 export interface Project {
   title: string;
+  role: string;
+  period: string;
   description: string;
   tech: string[];
-  github: string;
+  github?: string;
   demo?: string;
   visual: ProjectVisual;
 }
 
 export const projects: Project[] = [
   {
-    title: "STM32 Tabanlı Veri Toplama Kartı",
+    title: "Teknofest İHA Yarışması",
+    role: "Aviyonik Sistemler Sorumlusu — Misya Havacılık ve Uzay Teknolojileri Topluluğu",
+    period: "2024 — Devam",
     description:
-      "STM32F4 üzerinde çalışan, 4 kanallı 16-bit ADC ile analog sinyalleri örnekleyip USB üzerinden aktaran özgün tasarım bir veri toplama kartı. Şematik ve 4 katmanlı PCB tasarımı Altium Designer ile yapıldı.",
-    tech: ["STM32", "C", "Altium Designer", "USB CDC", "DMA"],
-    github: "https://github.com/gulheda",
-    demo: undefined,
-    visual: "mcu",
+      "Elektronik alt sistem ekibine liderlik ediyorum: İHA'nın güç dağıtım ağını tasarlıyor, datasheet analizleriyle maliyet-performans dengesini kurarak komponent seçimlerini yapıyor ve tüm aviyonik bileşenlerin entegrasyonunu yönetiyorum.",
+    tech: ["Autodesk Eagle", "ArduPilot", "MAVLink", "Güç Dağıtımı"],
+    visual: "uav",
   },
   {
-    title: "Senkron Buck Konvertör Tasarımı",
+    title: "Teknofest Model Uydu Yarışması",
+    role: "Aviyonik Sistemler Üyesi — Misya Havacılık ve Uzay Teknolojileri Topluluğu",
+    period: "2023 — 2024",
     description:
-      "24V girişten 5V/3A çıkış üreten, %92 verimli senkron buck konvertör. Güç katı LTSpice ile simüle edildi, kapalı çevrim kompanzasyonu hesaplandı ve iki katmanlı PCB üzerinde doğrulandı.",
-    tech: ["Power Electronics", "LTSpice", "KiCad", "Kontrol Teorisi"],
-    github: "https://github.com/gulheda",
-    demo: undefined,
-    visual: "power",
+      "Uçuş bilgisayarı ve güç kartlarının PCB tasarımlarını Autodesk Eagle ile gerçekleştirdim; kart boyutlarını yarışma gereksinimlerine göre optimize ettim. Uydu ile yer istasyonu arasındaki RF haberleşme sistemini kurarak telemetri verilerinin kesintisiz aktarımını sağladım.",
+    tech: ["Autodesk Eagle", "PCB Tasarımı", "RF Modülleri", "Telemetri"],
+    visual: "cansat",
   },
   {
-    title: "ESP32 Ortam İzleme Düğümü",
+    title: "Sürü İHA Senkronizasyonu",
+    role: "Aviyonik Sistemler Mühendisi — Tusmec Karma Robot Teknolojileri A.Ş.",
+    period: "2024 — 2025",
     description:
-      "Sıcaklık, nem ve hava kalitesi verilerini toplayıp MQTT üzerinden yayınlayan, derin uyku ile pil ömrü optimize edilmiş IoT sensör düğümü. Özel tasarım PCB ve 3B baskı muhafaza ile birlikte.",
-    tech: ["ESP32", "C++", "MQTT", "EasyEDA", "Low Power"],
-    github: "https://github.com/gulheda",
-    demo: "https://github.com/gulheda",
-    visual: "sensor",
-  },
-  {
-    title: "Gerçek Zamanlı Sinyal Analiz Aracı",
-    description:
-      "Mikrofon ve harici ADC girişlerinden alınan sinyaller üzerinde FFT, filtreleme ve spektrogram analizi yapan Python tabanlı masaüstü araç. DSP algoritmaları NumPy ile vektörize edildi.",
-    tech: ["Python", "NumPy", "DSP", "Matplotlib", "PyQt"],
-    github: "https://github.com/gulheda",
-    demo: "https://github.com/gulheda",
-    visual: "signal",
+      "Sürü İHA sistemlerinin yazılım entegrasyonunu gerçekleştirdim; çoklu araçların senkronizasyonu için MAVLink tabanlı haberleşme altyapısını kurdum. Motor-pervane kombinasyonlarını sistematik olarak test ederek itki/ağırlık oranını ve uçuş süresini ölçülebilir biçimde iyileştirdim.",
+    tech: ["MAVLink", "ArduPilot", "Python", "Uçuş Testi"],
+    visual: "swarm",
   },
 ];

@@ -7,54 +7,34 @@ export interface TimelineItem {
 
 export const experience: TimelineItem[] = [
   {
-    period: "2025 — Devam",
-    title: "Donanım Tasarım Stajyeri",
-    subtitle: "Elektronik Ar-Ge Laboratuvarı",
+    period: "2024 — Devam",
+    title: "Aviyonik Sistemler Sorumlusu",
+    subtitle: "Misya Havacılık ve Uzay Teknolojileri Topluluğu — Teknofest İHA",
     description:
-      "Karışık sinyal kartlarının şematik çizimi, PCB yerleşimi ve prototip testlerinde görev alıyorum. EMC ön uyumluluk ölçümleri ve tasarım gözden geçirmelerine katılıyorum.",
+      "Elektronik alt sistem ekibine liderlik ediyorum; İHA'nın güç dağıtım ağını tasarlıyor ve tüm aviyonik bileşenlerin entegrasyonunu yönetiyorum. Aviyonik sistem mimarisini oluşturuyor, datasheet analizleriyle maliyet-performans dengesi kurarak komponent seçimlerini gerçekleştiriyorum.",
   },
   {
-    period: "2024",
-    title: "Gömülü Yazılım Stajyeri",
-    subtitle: "Teknoloji Firması",
+    period: "Eyl 2024 — May 2025",
+    title: "Aviyonik Sistemler Mühendisi",
+    subtitle: "Tusmec Karma Robot Teknolojileri A.Ş.",
     description:
-      "STM32 tabanlı ürün ailesinde HAL katmanı üzerinde sürücü geliştirdim; UART/SPI haberleşme protokolleri ve FreeRTOS görev yapıları üzerinde çalıştım.",
+      "Sürü İHA sistemlerinin yazılım entegrasyonunu ve MAVLink tabanlı haberleşme altyapısını kurdum. Motor-pervane kombinasyonlarını test ederek itki/ağırlık oranını optimize ettim; mekanik montaj, lehimleme ve aviyonik entegrasyonu tamamladım. Prototip uçuş testlerini pilot olarak gerçekleştirip uçuş verilerinden stabilite sorunlarını tespit ederek çözdüm.",
   },
   {
-    period: "2023 — Devam",
-    title: "Elektronik Birimi Üyesi",
-    subtitle: "Üniversite Teknoloji Takımı",
+    period: "2023 — 2024",
+    title: "Aviyonik Sistemler Üyesi",
+    subtitle: "Misya Havacılık ve Uzay Teknolojileri Topluluğu — Teknofest Model Uydu",
     description:
-      "İnsansız araç projelerinde güç dağıtım kartı tasarımı ve sensör entegrasyonundan sorumluyum. Takım içi PCB tasarım standartlarının oluşturulmasına katkı sağladım.",
+      "Uçuş bilgisayarı ve güç kartlarının PCB tasarımlarını Autodesk Eagle ile yaptım. Uydu ile yer istasyonu arasındaki haberleşme sistemini kurdum; telemetri verilerinin kesintisiz aktarımı için RF modüllerini entegre ettim ve güç/ağırlık kısıtlarına uygun komponentleri belirledim.",
   },
 ];
 
 export const education: TimelineItem[] = [
   {
-    period: "2022 — Devam",
-    title: "Elektrik-Elektronik Mühendisliği (Lisans)",
-    subtitle: "Üniversite",
+    period: "Ekim 2023 — Haziran 2027",
+    title: "Elektrik-Elektronik Mühendisliği (Lisans, 3. sınıf)",
+    subtitle: "Balıkesir Üniversitesi",
     description:
-      "Devre teorisi, elektromanyetik, güç elektroniği, sayısal tasarım ve sinyal işleme ağırlıklı müfredat. Gömülü sistemler ve PCB tasarımı üzerine seçmeli derslerle uzmanlaşma.",
+      "Aviyonik sistemler, güç elektroniği ve gömülü sistem tasarımı üzerine yoğunlaşıyorum. Teknofest yarışma takımlarında aldığım aktif görevlerle teorik eğitimi saha deneyimine dönüştürüyorum.",
   },
-  {
-    period: "2018 — 2022",
-    title: "Fen Lisesi",
-    subtitle: "Lise Eğitimi",
-    description:
-      "Matematik ve fizik ağırlıklı eğitim; TÜBİTAK proje yarışmalarında elektronik alanında proje deneyimi.",
-  },
-];
-
-export interface Certificate {
-  title: string;
-  issuer: string;
-  year: string;
-}
-
-export const certificates: Certificate[] = [
-  { title: "Embedded Systems Essentials", issuer: "edX — ARM Education", year: "2025" },
-  { title: "PCB Design for Real Hardware", issuer: "Udemy", year: "2024" },
-  { title: "Python for Everybody", issuer: "Coursera — University of Michigan", year: "2024" },
-  { title: "MATLAB Onramp", issuer: "MathWorks", year: "2023" },
 ];

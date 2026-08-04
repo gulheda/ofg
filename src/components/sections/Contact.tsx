@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { FileDown, Github, Linkedin, Mail, Send } from "lucide-react";
+import { FileDown, Linkedin, Mail, Phone, Send } from "lucide-react";
 import Section from "@/components/ui/Section";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
 import { site } from "@/data/site";
 
 const contactLinks = [
-  { icon: Github, label: "GitHub", href: site.github, external: true },
   { icon: Linkedin, label: "LinkedIn", href: site.linkedin, external: true },
   { icon: Mail, label: site.email, href: `mailto:${site.email}`, external: false },
+  { icon: Phone, label: site.phone, href: site.phoneHref, external: false },
   { icon: FileDown, label: "CV İndir", href: site.cvUrl, external: false },
 ];
 
@@ -30,7 +30,7 @@ export default function Contact() {
   return (
     <Section id="iletisim">
       <SectionHeading
-        eyebrow="07 — İletişim"
+        eyebrow="06 — İletişim"
         title="Birlikte çalışalım"
         description="Bir proje fikriniz mi var, staj ya da iş birliği mi konuşmak istiyorsunuz? Mesajınızı bekliyorum."
       />
@@ -68,7 +68,7 @@ export default function Contact() {
                 rows={5}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
-                placeholder="Merhaba Gülheda, ..."
+                placeholder="Merhaba Ömer, ..."
                 className={`${inputClass} resize-none`}
               />
             </label>
@@ -101,8 +101,8 @@ export default function Contact() {
               </a>
             ))}
             <p className="pt-4 text-sm leading-relaxed text-zinc-500">
-              Genellikle 24 saat içinde dönüş yaparım. Açık kaynak donanım projeleri ve
-              teknik tartışmalar için GitHub üzerinden de ulaşabilirsiniz.
+              Genellikle 24 saat içinde dönüş yaparım. Takım çalışmaları, yarışma iş
+              birlikleri ve staj fırsatları için LinkedIn üzerinden de ulaşabilirsiniz.
             </p>
           </div>
         </Reveal>
