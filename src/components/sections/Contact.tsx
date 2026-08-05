@@ -15,7 +15,7 @@ const secondaryLinks = [
 
 export default function Contact() {
   return (
-    <Section id="iletisim" className="bg-surface/70 backdrop-blur-md">
+    <Section id="iletisim" className="bg-surface/35 backdrop-blur-md">
       <Reveal variant="fade">
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.25em] text-accent">
           06 — İletişim

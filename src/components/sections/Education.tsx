@@ -5,7 +5,7 @@ import { education } from "@/data/timeline";
 
 export default function Education() {
   return (
-    <Section id="egitim" className="bg-surface/70 backdrop-blur-md">
+    <Section id="egitim" className="bg-surface/35 backdrop-blur-md">
       <SectionHeading eyebrow="05 — Eğitim" title="Akademik yolculuk" />
       <Timeline items={education} />
     </Section>

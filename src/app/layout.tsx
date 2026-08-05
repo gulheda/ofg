@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { site } from "@/data/site";
 import TechnicalFrame from "@/components/layout/TechnicalFrame";
@@ -32,6 +33,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans">
+        {/* A refresh should always land back on the hero, not wherever the
+            browser's own scroll restoration would put it. */}
+        <Script id="scroll-reset" strategy="beforeInteractive">
+          {`if ("scrollRestoration" in history) { history.scrollRestoration = "manual"; } window.scrollTo(0, 0);`}
+        </Script>
         <PcbBackground className="pointer-events-none fixed inset-0 -z-10" />
         <TechnicalFrame />
         {children}

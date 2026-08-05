@@ -3,72 +3,101 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-const BOOT_DURATION_MS = 1200;
-const HOLD_MS = 250;
+const DRAW_MS = 900;
+const LIT_HOLD_MS = 350;
 const FADE_MS = 550;
-/** Under reduced motion the fill is skipped, but the branding still holds briefly before fading. */
-const STATIC_HOLD_MS = 500;
+const REDUCED_HOLD_MS = 450;
 
-/** A real boot sequence before the page reveals itself — the opening half of the site's bookend. */
+const traceEase: [number, number, number, number] = [0.65, 0, 0.35, 1];
+
+/** Four traces from viewBox 0 0 240 240 into a chip pad. Same 90°-bend
+ * routing style as the PCB generator, so the intro reads as the board
+ * itself powering on rather than a generic loading widget. */
+const traces = [
+  "M24 24 H104 V104",
+  "M216 24 H136 V104",
+  "M24 216 H104 V136",
+  "M216 216 H136 V136",
+];
+
+/** Circuit power-on sequence — traces draw in toward a center chip which
+ * then lights up, before the overlay dissolves into the page. This is the
+ * opening half of the site's bookend (ClosingSeal in Contact is the other).
+ */
 export default function IntroOverlay() {
   const reducedMotion = useReducedMotion();
   const [visible, setVisible] = useState(true);
-  const [progress, setProgress] = useState(0);
+  const [lit, setLit] = useState(false);
 
   useEffect(() => {
     if (reducedMotion) {
-      // Skip the animated fill — a system-level "reduce motion" preference should
-      // never make this branding moment disappear entirely, just lose the motion.
-      setProgress(100);
-      const timer = window.setTimeout(() => setVisible(false), STATIC_HOLD_MS);
-      return () => window.clearTimeout(timer);
+      setLit(true);
+      const t = window.setTimeout(() => setVisible(false), REDUCED_HOLD_MS);
+      return () => window.clearTimeout(t);
     }
-
-    let raf = 0;
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      const t = Math.min((now - start) / BOOT_DURATION_MS, 1);
-      const eased = 1 - Math.pow(1 - t, 2);
-      setProgress(Math.round(eased * 100));
-      if (t < 1) {
-        raf = requestAnimationFrame(tick);
-      } else {
-        window.setTimeout(() => setVisible(false), HOLD_MS);
-      }
+    const t1 = window.setTimeout(() => setLit(true), DRAW_MS);
+    const t2 = window.setTimeout(() => setVisible(false), DRAW_MS + LIT_HOLD_MS);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
   }, [reducedMotion]);
 
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-7 bg-background"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: FADE_MS / 1000, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span
-            className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-accent/70"
-            style={{ boxShadow: "0 0 18px rgba(59,116,220,0.5)" }}
-          >
-            <span className="h-1 w-1 rounded-full bg-accent" />
-          </span>
+          <svg width="200" height="200" viewBox="0 0 240 240" fill="none">
+            <g stroke="#3B74DC" strokeWidth="1.5" strokeLinecap="round">
+              {traces.map((d, i) => (
+                <motion.path
+                  key={d}
+                  d={d}
+                  initial={{ pathLength: 0, opacity: 0.9 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{
+                    duration: reducedMotion ? 0 : 0.7,
+                    delay: reducedMotion ? 0 : i * 0.08,
+                    ease: traceEase,
+                  }}
+                />
+              ))}
+            </g>
 
-          <div className="w-52 sm:w-64">
-            <div className="h-px w-full overflow-hidden bg-zinc-800">
-              <div
-                className="h-full bg-accent transition-[width] duration-75 ease-linear"
-                style={{ width: `${progress}%`, boxShadow: "0 0 8px rgba(59,116,220,0.8)" }}
-              />
-            </div>
-            <div className="mt-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500">
-              <span>Sistem Başlatılıyor</span>
-              <span className="tabular-nums text-zinc-400">{progress}%</span>
-            </div>
-          </div>
+            <motion.rect
+              x="104"
+              y="104"
+              width="32"
+              height="32"
+              rx="4"
+              stroke="#3B74DC"
+              strokeWidth="1.5"
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: lit ? 1 : 0.5 }}
+              transition={{ duration: reducedMotion ? 0 : 0.3 }}
+            />
+            <motion.circle
+              cx="120"
+              cy="120"
+              r="4"
+              fill="#3B74DC"
+              initial={{ opacity: 0.5, scale: 0.8 }}
+              animate={
+                lit
+                  ? { opacity: 1, scale: [0.8, 1.25, 1] }
+                  : { opacity: 0.5, scale: 0.8 }
+              }
+              transition={{ duration: reducedMotion ? 0 : 0.45, ease: "easeOut" }}
+              style={{
+                filter: lit ? "drop-shadow(0 0 10px rgba(59,116,220,0.9))" : "none",
+              }}
+            />
+          </svg>
         </motion.div>
       )}
     </AnimatePresence>

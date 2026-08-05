@@ -6,7 +6,7 @@ import { projects } from "@/data/projects";
 
 export default function Projects() {
   return (
-    <Section id="projeler" className="bg-surface/70 backdrop-blur-md">
+    <Section id="projeler" className="bg-surface/35 backdrop-blur-md">
       <SectionHeading
         eyebrow="03 — Projeler"
         title="Seçili çalışmalar"
