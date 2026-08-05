@@ -52,7 +52,7 @@ export default function IntroOverlay() {
         >
           <span
             className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-accent/70"
-            style={{ boxShadow: "0 0 18px rgba(47,111,238,0.5)" }}
+            style={{ boxShadow: "0 0 18px rgba(59,116,220,0.5)" }}
           >
             <span className="h-1 w-1 rounded-full bg-accent" />
           </span>
@@ -61,7 +61,7 @@ export default function IntroOverlay() {
             <div className="h-px w-full overflow-hidden bg-zinc-800">
               <div
                 className="h-full bg-accent transition-[width] duration-75 ease-linear"
-                style={{ width: `${progress}%`, boxShadow: "0 0 8px rgba(47,111,238,0.8)" }}
+                style={{ width: `${progress}%`, boxShadow: "0 0 8px rgba(59,116,220,0.8)" }}
               />
             </div>
             <div className="mt-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-500">

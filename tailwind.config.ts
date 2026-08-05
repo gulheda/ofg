@@ -5,16 +5,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#09090B",
-        surface: "#111111",
-        card: "#18181B",
+        background: "#0A1224",
+        surface: "#101C33",
+        card: "#16223E",
         accent: {
-          DEFAULT: "#2F6FEE",
-          light: "#7DAAFB",
+          DEFAULT: "#3B74DC",
+          light: "#7FA8EE",
         },
       },
       borderColor: {
-        subtle: "rgba(255,255,255,0.08)",
+        subtle: "rgba(148,171,214,0.12)",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
@@ -24,8 +24,8 @@ const config: Config = {
         content: "72rem",
       },
       boxShadow: {
-        glow: "0 0 40px -10px rgba(47,111,238,0.4)",
-        "glow-sm": "0 0 22px -8px rgba(47,111,238,0.32)",
+        glow: "0 0 40px -10px rgba(59,116,220,0.4)",
+        "glow-sm": "0 0 22px -8px rgba(59,116,220,0.32)",
       },
     },
   },

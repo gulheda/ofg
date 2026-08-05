@@ -1,5 +1,3 @@
-export type ProjectVisual = "uav" | "cansat" | "swarm";
-
 export interface Project {
   title: string;
   role: string;
@@ -8,7 +6,6 @@ export interface Project {
   tech: string[];
   github?: string;
   demo?: string;
-  visual: ProjectVisual;
 }
 
 export const projects: Project[] = [
@@ -19,7 +16,6 @@ export const projects: Project[] = [
     description:
       "Elektronik alt sistem ekibine liderlik ediyorum: İHA'nın güç dağıtım ağını tasarlıyor, datasheet analizleriyle maliyet-performans dengesini kurarak komponent seçimlerini yapıyor ve tüm aviyonik bileşenlerin entegrasyonunu yönetiyorum.",
     tech: ["Autodesk Eagle", "ArduPilot", "MAVLink", "Güç Dağıtımı"],
-    visual: "uav",
   },
   {
     title: "Teknofest Model Uydu Yarışması",
@@ -28,7 +24,6 @@ export const projects: Project[] = [
     description:
       "Uçuş bilgisayarı ve güç kartlarının PCB tasarımlarını Autodesk Eagle ile gerçekleştirdim; kart boyutlarını yarışma gereksinimlerine göre optimize ettim. Uydu ile yer istasyonu arasındaki RF haberleşme sistemini kurarak telemetri verilerinin kesintisiz aktarımını sağladım.",
     tech: ["Autodesk Eagle", "PCB Tasarımı", "RF Modülleri", "Telemetri"],
-    visual: "cansat",
   },
   {
     title: "Sürü İHA Senkronizasyonu",
@@ -37,6 +32,5 @@ export const projects: Project[] = [
     description:
       "Sürü İHA sistemlerinin yazılım entegrasyonunu gerçekleştirdim; çoklu araçların senkronizasyonu için MAVLink tabanlı haberleşme altyapısını kurdum. Motor-pervane kombinasyonlarını sistematik olarak test ederek itki/ağırlık oranını ve uçuş süresini ölçülebilir biçimde iyileştirdim.",
     tech: ["MAVLink", "ArduPilot", "Python", "Uçuş Testi"],
-    visual: "swarm",
   },
 ];

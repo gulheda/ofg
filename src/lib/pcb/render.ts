@@ -117,7 +117,7 @@ export function renderLitLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout)
   const strokeFor = (tint: number) => litShade(tint, 1);
 
   ctx.save();
-  ctx.shadowColor = "rgba(47,111,238,0.7)";
+  ctx.shadowColor = "rgba(59,116,220,0.7)";
   ctx.shadowBlur = 10;
   drawGeometry(ctx, layout, strokeFor, litShade(0.6, 1), 1.3);
   ctx.restore();

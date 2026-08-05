@@ -28,7 +28,7 @@ export default function Navbar() {
     >
       {/* the current running along the top edge — real scroll progress, not decoration */}
       <motion.div
-        className="absolute inset-x-0 top-0 h-[2px] origin-left bg-accent shadow-[0_0_6px_rgba(47,111,238,0.8)]"
+        className="absolute inset-x-0 top-0 h-[2px] origin-left bg-accent shadow-[0_0_6px_rgba(59,116,220,0.8)]"
         style={{ scaleX: progress }}
       />
 
