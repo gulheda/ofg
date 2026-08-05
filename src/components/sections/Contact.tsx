@@ -25,7 +25,7 @@ export default function Contact() {
       <TextReveal
         as="h2"
         delay={0.05}
-        className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl"
+        className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl md:text-4xl"
       >
         Birlikte neler yapabiliriz?
       </TextReveal>
@@ -40,7 +40,7 @@ export default function Contact() {
       <Reveal variant="slide-up" delay={0.3}>
         <a
           href={`mailto:${site.email}`}
-          className="circuit-link group mt-12 inline-flex max-w-full items-center gap-2 break-all text-lg font-medium text-zinc-100 transition-colors duration-300 hover:text-accent sm:gap-3 sm:text-xl md:text-2xl lg:text-3xl"
+          className="circuit-link group mt-12 inline-flex max-w-full items-center gap-2 break-all text-base font-medium text-zinc-100 transition-colors duration-300 hover:text-accent sm:gap-3 sm:text-lg md:text-xl lg:text-2xl"
         >
           {site.email}
           <ArrowUpRight

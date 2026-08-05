@@ -101,11 +101,11 @@ export function renderBaseLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout
   ctx.shadowColor = "rgba(100,120,160,0.5)";
   ctx.shadowBlur = 3;
   ctx.globalAlpha = 0.5;
-  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.6), 1.15);
+  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.6), 0.9);
   ctx.restore();
 
   ctx.save();
-  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.95), 1);
+  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.95), 0.8);
   ctx.restore();
 }
 
@@ -119,10 +119,10 @@ export function renderLitLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout)
   ctx.save();
   ctx.shadowColor = "rgba(59,116,220,0.7)";
   ctx.shadowBlur = 10;
-  drawGeometry(ctx, layout, strokeFor, litShade(0.6, 1), 1.3);
+  drawGeometry(ctx, layout, strokeFor, litShade(0.6, 1), 1.0);
   ctx.restore();
 
   ctx.save();
-  drawGeometry(ctx, layout, strokeFor, "rgba(203,216,240,1)", 1.05);
+  drawGeometry(ctx, layout, strokeFor, "rgba(203,216,240,1)", 0.85);
   ctx.restore();
 }

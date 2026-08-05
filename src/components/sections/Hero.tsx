@@ -46,14 +46,14 @@ export default function Hero() {
             as="h1"
             trigger="mount"
             delay={0.18}
-            className="text-4xl font-semibold leading-[1.05] tracking-tight text-zinc-50 sm:text-5xl md:text-6xl"
+            className="text-3xl font-semibold leading-[1.1] tracking-tight text-zinc-50 sm:text-4xl md:text-5xl"
           >
             {site.name}
           </TextReveal>
 
           <motion.p
             {...enter(0.32)}
-            className="mt-6 max-w-2xl text-base leading-relaxed text-zinc-300 md:text-lg"
+            className="mt-6 max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base"
           >
             <span className="text-zinc-100">Teknofest İHA</span> takımında elektronik alt
             sistem ekibini yöneten; <span className="font-mono text-accent">güç dağıtımından</span>{" "}

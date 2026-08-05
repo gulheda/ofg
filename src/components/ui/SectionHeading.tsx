@@ -18,13 +18,13 @@ export default function SectionHeading({ eyebrow, title, description }: SectionH
       <TextReveal
         as="h2"
         delay={0.08}
-        className="text-2xl font-semibold tracking-tight text-zinc-50 md:text-3xl"
+        className="text-xl font-semibold tracking-tight text-zinc-50 md:text-2xl"
       >
         {title}
       </TextReveal>
       {description && (
         <Reveal variant="fade" delay={0.2}>
-          <p className="mt-4 text-sm leading-relaxed text-zinc-400 md:text-base">{description}</p>
+          <p className="mt-4 text-sm leading-relaxed text-zinc-400">{description}</p>
         </Reveal>
       )}
     </div>

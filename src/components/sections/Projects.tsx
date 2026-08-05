@@ -21,7 +21,7 @@ export default function Projects() {
               </span>
 
               <div>
-                <h3 className="text-xl font-semibold tracking-tight text-zinc-50 md:text-2xl">
+                <h3 className="text-lg font-semibold tracking-tight text-zinc-50 md:text-xl">
                   {project.title}
                 </h3>
                 <p className="mt-1.5 font-mono text-xs uppercase tracking-wide text-accent/80">

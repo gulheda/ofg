@@ -1,7 +1,7 @@
 import type { Chip, Pad, Passive, PcbLayout, PcbOptions, Point, Trace, Via } from "./types";
 
 /** Routing grid pitch in CSS px — everything snaps to this, like a real board. */
-const PITCH = 24;
+const PITCH = 15;
 const MARGIN = PITCH;
 
 /** Deterministic PRNG (mulberry32) so the board is stable across re-renders. */
@@ -99,8 +99,8 @@ function makeChip(rng: () => number, cx: number, cy: number): Chip {
   const x = Math.round((cx - w / 2) / PITCH) * PITCH;
   const y = Math.round((cy - h / 2) / PITCH) * PITCH;
   const pins: Chip["pins"] = [];
-  const pinPitch = 8;
-  const stub = 6;
+  const pinPitch = 5;
+  const stub = 4;
 
   // pin stubs along left/right edges
   for (let py = y + pinPitch; py <= y + h - pinPitch; py += pinPitch) {
@@ -131,27 +131,27 @@ export function generatePcb(opts: PcbOptions): PcbLayout {
     layout.traces.push({ points: res.points, tint });
     const roll = rng();
     if (roll < 0.5) {
-      layout.vias.push({ x: res.end.x, y: res.end.y, r: 3.2 });
+      layout.vias.push({ x: res.end.x, y: res.end.y, r: 2 });
     } else if (roll < 0.82) {
-      layout.pads.push({ x: res.end.x, y: res.end.y, r: 2.6, square: rng() < 0.35 });
+      layout.pads.push({ x: res.end.x, y: res.end.y, r: 1.6, square: rng() < 0.35 });
     } else {
       // resistor-like passive sitting on the tail of the last segment
-      const bodyLen = 14;
-      const cx = res.end.x - res.endDir.x * (bodyLen / 2 + 4);
-      const cy = res.end.y - res.endDir.y * (bodyLen / 2 + 4);
+      const bodyLen = 9;
+      const cx = res.end.x - res.endDir.x * (bodyLen / 2 + 3);
+      const cy = res.end.y - res.endDir.y * (bodyLen / 2 + 3);
       layout.passives.push({
         x: cx,
         y: cy,
         angle: Math.atan2(res.endDir.y, res.endDir.x),
         length: bodyLen,
-        width: 6,
+        width: 4,
       });
-      layout.pads.push({ x: res.end.x, y: res.end.y, r: 2.4, square: true });
+      layout.pads.push({ x: res.end.x, y: res.end.y, r: 1.5, square: true });
     }
   };
 
-  // --- IC footprints, roughly one per 380² px region ---
-  const chipCount = Math.max(1, Math.round((area / (380 * 380)) * density));
+  // --- IC footprints, roughly one per 300² px region ---
+  const chipCount = Math.max(1, Math.round((area / (300 * 300)) * density));
   for (let i = 0; i < chipCount; i++) {
     const cx = MARGIN * 2 + rng() * (width - MARGIN * 4);
     const cy = MARGIN * 2 + rng() * (height - MARGIN * 4);
@@ -171,7 +171,7 @@ export function generatePcb(opts: PcbOptions): PcbLayout {
   }
 
   // --- free traces across the board ---
-  const traceCount = Math.round((area / 26000) * density);
+  const traceCount = Math.round((area / 16000) * density);
   for (let i = 0; i < traceCount; i++) {
     const start = {
       x: Math.round((MARGIN + rng() * (width - MARGIN * 2)) / PITCH) * PITCH,
@@ -189,13 +189,13 @@ export function generatePcb(opts: PcbOptions): PcbLayout {
     finishTrace(res, tint);
     // start of a free trace also gets a via or pad — nets connect somewhere
     if (rng() < 0.6) {
-      layout.vias.push({ x: start.x, y: start.y, r: 3.2 });
+      layout.vias.push({ x: start.x, y: start.y, r: 2 });
     } else {
-      layout.pads.push({ x: start.x, y: start.y, r: 2.6, square: false });
+      layout.pads.push({ x: start.x, y: start.y, r: 1.6, square: false });
     }
     // occasionally shadow it with a parallel twin — differential-pair feel
     if (rng() < 0.18) {
-      const off = 6;
+      const off = 4;
       layout.traces.push({
         points: res.points.map((p) => ({ x: p.x + off, y: p.y + off })),
         tint,
@@ -213,7 +213,7 @@ export function generatePcb(opts: PcbOptions): PcbLayout {
       layout.vias.push({
         x: cx + (rng() - 0.5) * PITCH * 2,
         y: cy + (rng() - 0.5) * PITCH * 2,
-        r: 2.4,
+        r: 1.5,
       });
     }
   }

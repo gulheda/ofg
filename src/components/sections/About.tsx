@@ -28,7 +28,7 @@ export default function About() {
 
       <div className="grid gap-10 lg:grid-cols-12">
         <Reveal className="lg:col-span-6">
-          <p className="text-lg leading-relaxed text-zinc-100 md:text-xl md:leading-[1.5]">
+          <p className="text-base leading-relaxed text-zinc-100 md:text-lg md:leading-[1.5]">
             Balıkesir Üniversitesi <span className="font-mono text-accent">Elektrik-Elektronik Mühendisliği</span> 3.
             sınıf öğrencisiyim. <span className="font-mono text-accent">Aviyonik sistemler</span> ve{" "}
             <span className="font-mono text-accent">PCB tasarımı</span> üzerine çalışıyorum.
