@@ -50,7 +50,7 @@ function UavArt() {
       {/* arms with power traces to motors */}
       {arms.map((a) => (
         <g key={`${a.mx}-${a.my}`}>
-          <path d={`M200 110 L${a.mx} ${a.my}`} stroke={accent} strokeWidth="1.4" />
+          <path d={`M200 110 L${a.mx} ${a.my}`} stroke={accent} strokeWidth="1.4" className="signal-line" />
           {/* ESC inline on the arm */}
           <rect
             x={(200 + a.mx) / 2 - 9}
@@ -67,7 +67,7 @@ function UavArt() {
         </g>
       ))}
       {/* battery + PDB rail */}
-      <path d="M200 134 V158" stroke={accent} strokeWidth="1.4" />
+      <path d="M200 134 V158" stroke={accent} strokeWidth="1.4" className="signal-line" />
       <rect x="178" y="158" width="44" height="20" rx="3" />
       <path d="M186 154 H194 M203 150 H211" />
       <text x="200" y="172" textAnchor="middle" fill={label} fontSize="8" fontFamily="monospace" stroke="none">LiPo 4S</text>
@@ -99,7 +99,7 @@ function CansatArt() {
         </g>
       ))}
       {/* RF downlink to ground station */}
-      <path d="M142 90 H280 L300 110 H316" stroke={accent} strokeWidth="1.4" />
+      <path d="M142 90 H280 L300 110 H316" stroke={accent} strokeWidth="1.4" className="signal-line" />
       <path d="M322 96 a20 20 0 0 1 20 -20" stroke={accent} />
       <path d="M322 96 a12 12 0 0 1 12 -12" stroke={accent} />
       <circle cx="322" cy="96" r="2" fill={accent} stroke="none" />
@@ -132,12 +132,16 @@ function SwarmArt() {
         </g>
       ))}
       {/* mesh links between drones */}
-      <path d="M124 66 L184 122 M276 66 L216 122 M124 58 H272" strokeDasharray="4 4" stroke={accentSoft} />
+      <path
+        d="M124 66 L184 122 M276 66 L216 122 M124 58 H272"
+        stroke={accentSoft}
+        className="signal-line"
+      />
       <text x="200" y="48" textAnchor="middle" fill="rgba(59,130,246,0.6)" fontSize="8" fontFamily="monospace" stroke="none">MAVLink MESH</text>
       {/* ground control station */}
       <rect x="164" y="168" width="72" height="28" rx="3" />
       <text x="200" y="186" textAnchor="middle" fill={label} fontSize="8" fontFamily="monospace" stroke="none">GCS</text>
-      <path d="M200 138 V168" stroke={accent} strokeWidth="1.4" />
+      <path d="M200 138 V168" stroke={accent} strokeWidth="1.4" className="signal-line" />
       {/* sync pulses on the uplink */}
       <circle cx="200" cy="150" r="2" fill={accent} stroke="none" />
       <circle cx="200" cy="159" r="1.4" fill={accentSoft} stroke="none" />

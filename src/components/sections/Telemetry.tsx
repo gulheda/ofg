@@ -1,5 +1,6 @@
 import Reveal from "@/components/ui/Reveal";
 import TechnicalCorners from "@/components/ui/TechnicalCorners";
+import TiltCard from "@/components/ui/TiltCard";
 import StatCounter from "@/components/ui/StatCounter";
 import { stats } from "@/data/stats";
 
@@ -15,20 +16,22 @@ export default function Telemetry() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {stats.map((stat, i) => (
             <Reveal key={stat.label} variant="scale" delay={i * 0.07}>
-              <div className="group relative overflow-hidden rounded-xl border border-subtle bg-card/80 p-5">
+              <div className="group relative rounded-xl border border-subtle bg-card/80">
                 <TechnicalCorners />
-                <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">
-                  T-{String(i + 1).padStart(2, "0")}
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50 md:text-4xl">
-                  {typeof stat.value === "number" ? (
-                    <StatCounter value={stat.value} suffix={stat.suffix} />
-                  ) : (
-                    stat.value
-                  )}
-                </p>
-                <p className="mt-2 text-sm font-medium text-accent/90">{stat.label}</p>
-                <p className="mt-1 text-xs leading-relaxed text-zinc-500">{stat.sub}</p>
+                <TiltCard className="overflow-hidden rounded-xl p-5" maxTilt={6}>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">
+                    T-{String(i + 1).padStart(2, "0")}
+                  </p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50 md:text-4xl">
+                    {typeof stat.value === "number" ? (
+                      <StatCounter value={stat.value} suffix={stat.suffix} />
+                    ) : (
+                      stat.value
+                    )}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-accent/90">{stat.label}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">{stat.sub}</p>
+                </TiltCard>
               </div>
             </Reveal>
           ))}

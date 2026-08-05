@@ -8,7 +8,7 @@ interface SectionHeadingProps {
 
 export default function SectionHeading({ eyebrow, title, description }: SectionHeadingProps) {
   return (
-    <Reveal className="mb-14 max-w-2xl md:mb-20">
+    <Reveal variant="tilt" className="mb-14 max-w-2xl md:mb-20">
       <p className="mb-3 font-mono text-xs uppercase tracking-[0.25em] text-accent">
         {eyebrow}
       </p>
