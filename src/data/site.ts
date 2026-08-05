@@ -1,3 +1,7 @@
+// Matches next.config.mjs's basePath so the CV link resolves correctly on
+// GitHub Pages, where the site is served from a /ofg subpath.
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const site = {
   name: "Ömer Faruk Gündüz",
   handle: "omerfaruk.gunduz",
@@ -8,7 +12,7 @@ export const site = {
   phone: "0546 816 77 27",
   phoneHref: "tel:+905468167727",
   linkedin: "https://www.linkedin.com/in/farukomergunduz",
-  cvUrl: "/cv.pdf",
+  cvUrl: `${basePath}/cv.pdf`,
   location: "Balıkesir, Türkiye",
 } as const;
 
