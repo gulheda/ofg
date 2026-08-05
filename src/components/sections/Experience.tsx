@@ -5,7 +5,7 @@ import { experience } from "@/data/timeline";
 
 export default function Experience() {
   return (
-    <Section id="deneyim" className="bg-surface/65 backdrop-blur-sm">
+    <Section id="deneyim" className="bg-surface/50 backdrop-blur-sm">
       <SectionHeading
         eyebrow="04 — Deneyim"
         title="Sahada öğrendiklerim"

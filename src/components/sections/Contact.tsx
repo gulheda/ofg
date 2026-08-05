@@ -15,7 +15,7 @@ const contactLinks = [
 ];
 
 const inputClass =
-  "w-full rounded-lg border border-subtle bg-card/85 backdrop-blur-sm px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors duration-200 focus:border-accent/60 focus:ring-1 focus:ring-accent/30";
+  "w-full rounded-lg border border-subtle bg-card/70 backdrop-blur-sm px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors duration-200 focus:border-accent/60 focus:ring-1 focus:ring-accent/30";
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -89,7 +89,7 @@ export default function Contact() {
                 key={link.label}
                 href={link.href}
                 {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                className="group flex items-center gap-4 rounded-xl border border-subtle bg-card/85 backdrop-blur-sm px-5 py-4 transition-all duration-300 hover:border-accent/30 hover:bg-card"
+                className="group flex items-center gap-4 rounded-xl border border-subtle bg-card/70 backdrop-blur-sm px-5 py-4 transition-all duration-300 hover:border-accent/30 hover:bg-card"
               >
                 <link.icon
                   size={18}

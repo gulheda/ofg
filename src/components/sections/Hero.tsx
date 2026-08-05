@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, FileDown } from "lucide-react";
+import TextReveal from "@/components/ui/TextReveal";
 import { site } from "@/data/site";
 
 const ease: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
@@ -39,12 +40,14 @@ export default function Hero() {
             {site.title}
           </motion.p>
 
-          <motion.h1
-            {...enter(0.2)}
+          <TextReveal
+            as="h1"
+            trigger="mount"
+            delay={0.18}
             className="text-5xl font-semibold leading-[1.05] tracking-tight text-zinc-50 sm:text-6xl md:text-7xl"
           >
             {site.name}
-          </motion.h1>
+          </TextReveal>
 
           <motion.p
             {...enter(0.32)}

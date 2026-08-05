@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { navLinks, site } from "@/data/site";
 
@@ -14,6 +15,9 @@ export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<string>(navLinks[0].href);
   const [scrolled, setScrolled] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+  const fill = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.3 });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -54,28 +58,38 @@ export default function Sidebar() {
         </a>
 
         <nav className="flex-1 py-8">
-          <ol className="relative ml-6 border-l border-subtle">
-            {navLinks.map((link) => {
-              const isActive = active === link.href;
-              return (
-                <li key={link.href} className="relative py-3.5 pl-6">
-                  <span
-                    className={`absolute -left-[5px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border transition-colors duration-300 ${
-                      isActive ? "border-accent bg-accent" : "border-zinc-600 bg-background"
-                    }`}
-                  />
-                  <a
-                    href={link.href}
-                    className={`text-sm transition-colors duration-200 ${
-                      isActive ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-200"
-                    }`}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              );
-            })}
-          </ol>
+          <div className="relative ml-6">
+            {/* the rail: a static trace, filled with an actual current as you scroll the page */}
+            <div className="absolute inset-y-0 left-0 w-px bg-zinc-800" />
+            {!reducedMotion && (
+              <motion.div
+                className="absolute left-0 top-0 w-px bg-accent shadow-[0_0_6px_rgba(47,111,238,0.8)]"
+                style={{ height: "100%", scaleY: fill, transformOrigin: "top" }}
+              />
+            )}
+            <ol className="relative">
+              {navLinks.map((link) => {
+                const isActive = active === link.href;
+                return (
+                  <li key={link.href} className="relative py-3.5 pl-6">
+                    <span
+                      className={`absolute -left-[5px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border transition-colors duration-300 ${
+                        isActive ? "border-accent bg-accent" : "border-zinc-600 bg-background"
+                      }`}
+                    />
+                    <a
+                      href={link.href}
+                      className={`text-sm transition-colors duration-200 ${
+                        isActive ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-200"
+                      }`}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         </nav>
 
         <div className="border-t border-subtle px-6 py-5 font-mono text-[10px] uppercase tracking-widest text-zinc-600">

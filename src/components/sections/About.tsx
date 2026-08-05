@@ -24,48 +24,51 @@ const focusAreas = [
 export default function About() {
   return (
     <Section id="hakkimda">
-      <SectionHeading
-        eyebrow="01 — Hakkımda"
-        title="Aviyonikle düşünen, sahada uçuran bir mühendis adayı"
-      />
-      <div className="grid gap-12 lg:grid-cols-5">
-        <Reveal className="lg:col-span-3">
-          <div className="space-y-5 text-base leading-relaxed text-zinc-400">
+      <SectionHeading eyebrow="01 — Hakkımda" title="Aviyonikle düşünen, sahada uçuran bir mühendis adayı" />
+
+      <div className="grid gap-10 lg:grid-cols-12">
+        <Reveal className="lg:col-span-6">
+          <p className="text-xl leading-relaxed text-zinc-200 md:text-[1.6rem] md:leading-[1.45]">
+            Balıkesir Üniversitesi Elektrik-Elektronik Mühendisliği 3. sınıf
+            öğrencisiyim. Aviyonik sistemler ve PCB tasarımı üzerine çalışıyorum.
+          </p>
+        </Reveal>
+        <Reveal variant="slide-left" delay={0.12} className="lg:col-span-6">
+          <div className="space-y-4 text-sm leading-relaxed text-zinc-400 lg:border-l lg:border-subtle lg:pl-10">
             <p>
-              Balıkesir Üniversitesi Elektrik-Elektronik Mühendisliği 3. sınıf
-              öğrencisiyim. Aviyonik sistemler ve PCB tasarımı üzerine çalışıyorum;
-              Teknofest İHA Yarışması&apos;nda elektronik alt sistem ekibini yönetiyor,
-              güç dağıtım ağını tasarlıyor ve RF haberleşme altyapısını kuruyorum.
+              Teknofest İHA Yarışması&apos;nda elektronik alt sistem ekibini
+              yönetiyor, güç dağıtım ağını tasarlıyor ve RF haberleşme
+              altyapısını kuruyorum.
             </p>
             <p>
-              Tusmec&apos;te sürü İHA entegrasyonu ve prototip uçuş testlerinde görev
-              aldım: Autodesk Eagle ile PCB tasarladım, motor-pervane kombinasyonlarını
-              optimize ettim ve test uçuşlarını pilot olarak bizzat gerçekleştirdim.
-              BEDAŞ&apos;ta arıza onarım ekipleriyle sahada bulunarak şehir ölçeğindeki
-              bir dağıtım şebekesinin nasıl işlediğini de yakından gördüm. Donanım
-              entegrasyonundan saha testine kadar tüm aviyonik süreçleri yürütmek,
-              işin en sevdiğim tarafı.
+              Tusmec&apos;te sürü İHA entegrasyonu ve prototip uçuş testlerinde
+              görev aldım: Autodesk Eagle ile PCB tasarladım, motor-pervane
+              kombinasyonlarını optimize ettim ve test uçuşlarını pilot olarak
+              bizzat gerçekleştirdim. BEDAŞ&apos;ta arıza onarım ekipleriyle
+              sahada bulunarak şehir ölçeğindeki bir dağıtım şebekesinin nasıl
+              işlediğini de yakından gördüm.
             </p>
             <p>
-              Bir sistemin datasheet&apos;inden başlayıp şematiğine, kartına, montajına
-              ve nihayet gökyüzündeki ilk uçuşuna kadar her aşamasında olmak — benim
-              için mühendisliğin tam karşılığı bu.
+              Bir sistemin datasheet&apos;inden başlayıp şematiğine, kartına,
+              montajına ve nihayet gökyüzündeki ilk uçuşuna kadar her aşamasında
+              olmak — benim için mühendisliğin tam karşılığı bu.
             </p>
           </div>
         </Reveal>
-        <div className="space-y-4 lg:col-span-2">
-          {focusAreas.map((area, i) => (
-            <Reveal key={area.title} variant="slide-left" delay={i * 0.1}>
-              <div className="flex gap-4 rounded-xl border-l-2 border-l-accent/50 border-y border-r border-subtle bg-card/85 backdrop-blur-sm p-5 transition-colors duration-300 hover:border-l-accent">
-                <area.icon size={20} className="mt-0.5 shrink-0 text-accent" />
-                <div>
-                  <h3 className="text-sm font-medium text-zinc-100">{area.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{area.text}</p>
-                </div>
+      </div>
+
+      <div className="mt-14 grid gap-8 border-t border-subtle pt-10 sm:grid-cols-3">
+        {focusAreas.map((area, i) => (
+          <Reveal key={area.title} variant="fade" delay={i * 0.08}>
+            <div className="flex items-start gap-3">
+              <area.icon size={18} className="mt-0.5 shrink-0 text-accent" />
+              <div>
+                <h3 className="text-sm font-medium text-zinc-100">{area.title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-500">{area.text}</p>
               </div>
-            </Reveal>
-          ))}
-        </div>
+            </div>
+          </Reveal>
+        ))}
       </div>
     </Section>
   );
