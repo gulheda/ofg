@@ -3,11 +3,66 @@
 import { useEffect, useRef } from "react";
 import { generatePcb } from "@/lib/pcb/generate";
 import { renderBaseLayer, renderLitLayer } from "@/lib/pcb/render";
+import type { Point, Trace } from "@/lib/pcb/types";
 
 /** Resting opacity of the copper layer (breathes ±15% around this). */
-const BASE_ALPHA = 0.85;
+const BASE_ALPHA = 0.6;
 const FADE_IN_MS = 1600;
 const BREATHE_PERIOD_MS = 9000;
+const PULSE_COUNT = 22;
+const PULSE_MIN_LEN = 50;
+
+interface Pulse {
+  points: Point[];
+  cum: number[];
+  total: number;
+  duration: number;
+  phase: number;
+}
+
+function buildPulses(traces: Trace[]): Pulse[] {
+  const candidates = traces
+    .map((t) => {
+      const cum = [0];
+      for (let i = 1; i < t.points.length; i++) {
+        const a = t.points[i - 1];
+        const b = t.points[i];
+        cum.push(cum[i - 1] + Math.hypot(b.x - a.x, b.y - a.y));
+      }
+      return { points: t.points, cum, total: cum[cum.length - 1] ?? 0 };
+    })
+    .filter((t) => t.total >= PULSE_MIN_LEN);
+
+  if (candidates.length === 0) return [];
+
+  const stride = Math.max(1, Math.floor(candidates.length / PULSE_COUNT));
+  const pulses: Pulse[] = [];
+  for (let i = 0; i < candidates.length && pulses.length < PULSE_COUNT; i += stride) {
+    const c = candidates[i];
+    pulses.push({
+      points: c.points,
+      cum: c.cum,
+      total: c.total,
+      duration: 2600 + Math.random() * 3200,
+      phase: Math.random(),
+    });
+  }
+  return pulses;
+}
+
+/** Position at normalised progress t (0..1) along a polyline, given its cumulative lengths. */
+function pointAtT(points: Point[], cum: number[], total: number, t: number): Point {
+  const target = t * total;
+  let i = 1;
+  while (i < cum.length && cum[i] < target) i++;
+  if (i >= points.length) return points[points.length - 1];
+  const segStart = cum[i - 1];
+  const segLen = cum[i] - segStart;
+  const segT = segLen > 0 ? (target - segStart) / segLen : 0;
+  const a = points[i - 1];
+  const b = points[i];
+  return { x: a.x + (b.x - a.x) * segT, y: a.y + (b.y - a.y) * segT };
+}
 
 /**
  * The site's one PCB canvas — mounted once, fixed behind every section, not
@@ -53,6 +108,7 @@ export default function PcbBackground({ className }: { className?: string }) {
     let raf = 0;
     let running = false;
     let startTime = 0;
+    let pulses: Pulse[] = [];
 
     // pointer state lives outside React — no re-renders in the hot path
     const pointer = { x: 0, y: 0, tx: 0, ty: 0, strength: 0, active: false };
@@ -88,6 +144,8 @@ export default function PcbBackground({ className }: { className?: string }) {
 
       spot.width = glowRadius * 2 * dpr;
       spot.height = glowRadius * 2 * dpr;
+
+      pulses = reducedMotion ? [] : buildPulses(layout.traces);
     };
 
     /** Copy the accent layer through a soft radial mask around the pointer. */
@@ -152,6 +210,25 @@ export default function PcbBackground({ className }: { className?: string }) {
       ctx.clearRect(0, 0, width, height);
       ctx.globalAlpha = BASE_ALPHA * breathe * easedFade;
       ctx.drawImage(base, 0, 0, width, height);
+      ctx.globalAlpha = 1;
+
+      // signal pulses — small bright dots travelling the traces on loop, so
+      // the board reads as live current flowing rather than a static print.
+      if (pulses.length > 0) {
+        ctx.save();
+        ctx.fillStyle = "#8fb8f5";
+        ctx.shadowColor = "rgba(59,116,220,0.9)";
+        ctx.shadowBlur = 6;
+        ctx.globalAlpha = easedFade;
+        for (const p of pulses) {
+          const t = ((elapsed / p.duration + p.phase) % 1 + 1) % 1;
+          const pos = pointAtT(p.points, p.cum, p.total, t);
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
 
       if (pointer.strength > 0.01) {
         renderSpot();

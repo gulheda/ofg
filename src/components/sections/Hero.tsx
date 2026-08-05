@@ -22,12 +22,13 @@ export default function Hero() {
 
   return (
     <section className="relative flex min-h-svh items-center overflow-hidden">
-      {/* soft radial vignette keeps the copy razor-legible over the board */}
+      {/* scrim darkens behind the text column so the copy stays legible over
+          the board, fading out toward the right where the PCB is meant to show */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 55% at 38% 45%, rgba(10,18,36,0) 0%, rgba(10,18,36,0.6) 100%)",
+            "linear-gradient(100deg, rgba(10,18,36,0.85) 0%, rgba(10,18,36,0.65) 32%, rgba(10,18,36,0.25) 58%, rgba(10,18,36,0) 78%), radial-gradient(ellipse 80% 60% at 50% 50%, rgba(10,18,36,0) 0%, rgba(10,18,36,0.45) 100%)",
         }}
       />
 
