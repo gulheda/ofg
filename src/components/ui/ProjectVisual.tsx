@@ -1,8 +1,8 @@
 import type { ProjectVisual as Variant } from "@/data/projects";
 
 const stroke = "rgba(228,228,231,0.35)";
-const accent = "#3B82F6";
-const accentSoft = "rgba(59,130,246,0.55)";
+const accent = "#2F6FEE";
+const accentSoft = "rgba(47,111,238,0.55)";
 const label = "rgba(228,228,231,0.5)";
 
 /**
@@ -71,7 +71,7 @@ function UavArt() {
       <rect x="178" y="158" width="44" height="20" rx="3" />
       <path d="M186 154 H194 M203 150 H211" />
       <text x="200" y="172" textAnchor="middle" fill={label} fontSize="8" fontFamily="monospace" stroke="none">LiPo 4S</text>
-      <text x="316" y="112" fill="rgba(59,130,246,0.6)" fontSize="8" fontFamily="monospace" stroke="none">PDB →</text>
+      <text x="316" y="112" fill="rgba(47,111,238,0.6)" fontSize="8" fontFamily="monospace" stroke="none">PDB →</text>
     </g>
   );
 }
@@ -107,7 +107,7 @@ function CansatArt() {
       <rect x="300" y="150" width="56" height="30" rx="3" />
       <path d="M322 110 V150" strokeDasharray="4 4" stroke={accentSoft} />
       <text x="328" y="169" textAnchor="middle" fill={label} fontSize="8" fontFamily="monospace" stroke="none">YER İST.</text>
-      <text x="238" y="82" fill="rgba(59,130,246,0.6)" fontSize="8" fontFamily="monospace" stroke="none">TLM →</text>
+      <text x="238" y="82" fill="rgba(47,111,238,0.6)" fontSize="8" fontFamily="monospace" stroke="none">TLM →</text>
     </g>
   );
 }
@@ -137,7 +137,7 @@ function SwarmArt() {
         stroke={accentSoft}
         className="signal-line"
       />
-      <text x="200" y="48" textAnchor="middle" fill="rgba(59,130,246,0.6)" fontSize="8" fontFamily="monospace" stroke="none">MAVLink MESH</text>
+      <text x="200" y="48" textAnchor="middle" fill="rgba(47,111,238,0.6)" fontSize="8" fontFamily="monospace" stroke="none">MAVLink MESH</text>
       {/* ground control station */}
       <rect x="164" y="168" width="72" height="28" rx="3" />
       <text x="200" y="186" textAnchor="middle" fill={label} fontSize="8" fontFamily="monospace" stroke="none">GCS</text>

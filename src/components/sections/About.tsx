@@ -2,7 +2,6 @@ import { CircuitBoard, Plane, Radio } from "lucide-react";
 import Section from "@/components/ui/Section";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
-import TechnicalCorners from "@/components/ui/TechnicalCorners";
 
 const focusAreas = [
   {
@@ -42,8 +41,10 @@ export default function About() {
               Tusmec&apos;te sürü İHA entegrasyonu ve prototip uçuş testlerinde görev
               aldım: Autodesk Eagle ile PCB tasarladım, motor-pervane kombinasyonlarını
               optimize ettim ve test uçuşlarını pilot olarak bizzat gerçekleştirdim.
-              Donanım entegrasyonundan saha testine kadar tüm aviyonik süreçleri
-              yürütmek, işin en sevdiğim tarafı.
+              BEDAŞ&apos;ta arıza onarım ekipleriyle sahada bulunarak şehir ölçeğindeki
+              bir dağıtım şebekesinin nasıl işlediğini de yakından gördüm. Donanım
+              entegrasyonundan saha testine kadar tüm aviyonik süreçleri yürütmek,
+              işin en sevdiğim tarafı.
             </p>
             <p>
               Bir sistemin datasheet&apos;inden başlayıp şematiğine, kartına, montajına
@@ -55,8 +56,7 @@ export default function About() {
         <div className="space-y-4 lg:col-span-2">
           {focusAreas.map((area, i) => (
             <Reveal key={area.title} variant="slide-left" delay={i * 0.1}>
-              <div className="group relative flex gap-4 rounded-xl border border-subtle bg-card/85 backdrop-blur-sm p-5 transition-colors duration-300 hover:border-accent/30">
-                <TechnicalCorners />
+              <div className="flex gap-4 rounded-xl border-l-2 border-l-accent/50 border-y border-r border-subtle bg-card/85 backdrop-blur-sm p-5 transition-colors duration-300 hover:border-l-accent">
                 <area.icon size={20} className="mt-0.5 shrink-0 text-accent" />
                 <div>
                   <h3 className="text-sm font-medium text-zinc-100">{area.title}</h3>

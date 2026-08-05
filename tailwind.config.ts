@@ -9,9 +9,8 @@ const config: Config = {
         surface: "#111111",
         card: "#18181B",
         accent: {
-          DEFAULT: "#3B82F6",
-          cyan: "#22D3EE",
-          violet: "#8B5CF6",
+          DEFAULT: "#2F6FEE",
+          light: "#7DAAFB",
         },
       },
       borderColor: {
@@ -25,8 +24,8 @@ const config: Config = {
         content: "72rem",
       },
       boxShadow: {
-        glow: "0 0 40px -12px rgba(59,130,246,0.35)",
-        "glow-sm": "0 0 24px -10px rgba(59,130,246,0.3)",
+        glow: "0 0 40px -10px rgba(47,111,238,0.4)",
+        "glow-sm": "0 0 22px -8px rgba(47,111,238,0.32)",
       },
     },
   },

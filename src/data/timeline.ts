@@ -7,6 +7,13 @@ export interface TimelineItem {
 
 export const experience: TimelineItem[] = [
   {
+    period: "Tem — Ağu 2025",
+    title: "Stajyer — Arıza Onarım ve Bakım Birimi",
+    subtitle: "BEDAŞ (Boğaziçi Elektrik Dağıtım A.Ş.) — İstanbul",
+    description:
+      "Şehir şebekesindeki orta ve düşük gerilim arıza müdahale ekiplerine sahada eşlik ettim; besleme hatlarındaki arızaların tespiti, izolasyon ve onarım süreçlerini gözlemleyip pano ve trafo bakımlarında görev aldım. Sahadaki iş güvenliği prosedürlerini ve büyük ölçekli dağıtım şebekesinin işleyişini yakından öğrendim.",
+  },
+  {
     period: "2024 — Devam",
     title: "Aviyonik Sistemler Sorumlusu",
     subtitle: "Misya Havacılık ve Uzay Teknolojileri Topluluğu — Teknofest İHA",

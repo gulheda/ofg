@@ -18,20 +18,37 @@
   }
 
   ::selection {
-    background: rgba(59, 130, 246, 0.3);
+    background: rgba(47, 111, 238, 0.3);
     color: #fafafa;
   }
 }
 
-@layer utilities {
-  /* Faint engineering-drawing graph paper — visible only where sections leave the flat background exposed. */
-  .bg-blueprint-grid {
-    background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-    background-size: 48px 48px;
+@layer components {
+  /* A link that "closes the circuit" on hover instead of just changing color. */
+  .circuit-link {
+    position: relative;
+    display: inline-block;
   }
 
+  .circuit-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    height: 1px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left;
+    background: linear-gradient(90deg, #2f6fee, rgba(47, 111, 238, 0));
+    transition: transform 0.35s cubic-bezier(0.21, 0.47, 0.32, 0.98);
+  }
+
+  .circuit-link:hover::after {
+    transform: scaleX(1);
+  }
+}
+
+@layer utilities {
   .signal-line {
     stroke-dasharray: 10 8;
     animation: signal-dash 5s linear infinite;

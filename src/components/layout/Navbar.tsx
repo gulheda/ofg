@@ -37,7 +37,7 @@ export default function Navbar() {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-sm text-zinc-400 transition-colors duration-200 hover:text-zinc-100"
+                className="circuit-link text-sm text-zinc-400 transition-colors duration-200 hover:text-zinc-100"
               >
                 {link.label}
               </a>
