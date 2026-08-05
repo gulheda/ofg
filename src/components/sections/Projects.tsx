@@ -5,7 +5,6 @@ import Reveal from "@/components/ui/Reveal";
 import ProjectVisual from "@/components/ui/ProjectVisual";
 import TechnicalCorners from "@/components/ui/TechnicalCorners";
 import TiltCard from "@/components/ui/TiltCard";
-import SectorBar from "@/components/ui/SectorBar";
 import { projects } from "@/data/projects";
 
 export default function Projects() {
@@ -19,10 +18,10 @@ export default function Projects() {
       <div className="grid gap-6 md:grid-cols-2">
         {projects.map((project, i) => (
           <Reveal key={project.title} delay={(i % 2) * 0.1}>
-            <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-subtle bg-card transition-all duration-300 hover:-translate-y-1.5 hover:border-accent/30 hover:shadow-glow">
+            <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-subtle bg-card/85 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-accent/30 hover:shadow-glow">
               <TechnicalCorners />
               <TiltCard className="flex h-full flex-col" maxTilt={5}>
-                <div className="relative aspect-[16/9] border-b border-subtle bg-surface">
+                <div className="relative aspect-[16/9] border-b border-subtle bg-surface/90">
                   <ProjectVisual variant={project.visual} />
                   <span className="absolute left-3 top-3 rounded-md border border-subtle bg-background/80 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 backdrop-blur-sm">
                     PRJ-{String(i + 1).padStart(2, "0")}
@@ -52,10 +51,7 @@ export default function Projects() {
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-5">
-                    <SectorBar />
-                  </div>
-                  <div className="mt-5 flex items-center justify-between gap-5 border-t border-subtle pt-4">
+                  <div className="mt-6 flex items-center justify-between gap-5 border-t border-subtle pt-4">
                     <span className="font-mono text-xs text-zinc-500">{project.period}</span>
                     <div className="flex items-center gap-5">
                       {project.github && (

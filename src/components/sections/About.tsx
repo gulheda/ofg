@@ -55,7 +55,7 @@ export default function About() {
         <div className="space-y-4 lg:col-span-2">
           {focusAreas.map((area, i) => (
             <Reveal key={area.title} variant="slide-left" delay={i * 0.1}>
-              <div className="group relative flex gap-4 rounded-xl border border-subtle bg-card p-5 transition-colors duration-300 hover:border-accent/30">
+              <div className="group relative flex gap-4 rounded-xl border border-subtle bg-card/85 backdrop-blur-sm p-5 transition-colors duration-300 hover:border-accent/30">
                 <TechnicalCorners />
                 <area.icon size={20} className="mt-0.5 shrink-0 text-accent" />
                 <div>

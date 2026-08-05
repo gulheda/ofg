@@ -16,7 +16,7 @@ export default function Telemetry() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {stats.map((stat, i) => (
             <Reveal key={stat.label} variant="scale" delay={i * 0.07}>
-              <div className="group relative rounded-xl border border-subtle bg-card/80">
+              <div className="group relative rounded-xl border border-subtle bg-card/80 backdrop-blur-sm">
                 <TechnicalCorners />
                 <TiltCard className="overflow-hidden rounded-xl p-5" maxTilt={6}>
                   <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-600">

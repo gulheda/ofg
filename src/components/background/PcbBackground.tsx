@@ -4,27 +4,27 @@ import { useEffect, useRef } from "react";
 import { generatePcb } from "@/lib/pcb/generate";
 import { renderBaseLayer, renderLitLayer } from "@/lib/pcb/render";
 
-/** Resting opacity of the copper layer (breathes ±20% around this). */
-const BASE_ALPHA = 0.12;
-const FADE_IN_MS = 1800;
+/** Resting opacity of the copper layer (breathes ±15% around this). */
+const BASE_ALPHA = 0.22;
+const FADE_IN_MS = 1600;
 const BREATHE_PERIOD_MS = 9000;
 
 /**
- * PCB-inspired interactive canvas background.
+ * The site's one PCB canvas — mounted once, fixed behind every section, not
+ * just the hero. Cards sit on top of it at partial opacity so the same board
+ * reads through the whole page instead of stopping at the fold.
  *
  * Architecture: geometry is generated once per resize and rasterised into two
- * offscreen layers (neutral + accent). The rAF loop only composites bitmaps —
- * a full-screen drawImage plus a small masked "spotlight" around the pointer —
- * so per-frame CPU cost stays minimal and 60fps is trivial to hold.
+ * offscreen layers (resting + accent). The rAF loop only composites bitmaps —
+ * a full-viewport drawImage plus a small masked "spotlight" around the
+ * pointer — so per-frame CPU cost stays minimal and 60fps is trivial to hold.
  */
 export default function PcbBackground({ className }: { className?: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
-    const canvas = containerRef.current && canvasRef.current;
-    if (!container || !canvas) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -34,8 +34,8 @@ export default function PcbBackground({ className }: { className?: string }) {
       window.matchMedia("(max-width: 768px)").matches ||
       window.matchMedia("(pointer: coarse)").matches;
 
-    const density = isMobile ? 0.45 : 1.25;
-    const glowRadius = isMobile ? 90 : 150;
+    const density = isMobile ? 0.5 : 1.3;
+    const glowRadius = isMobile ? 100 : 170;
 
     const base = document.createElement("canvas");
     const lit = document.createElement("canvas");
@@ -46,16 +46,14 @@ export default function PcbBackground({ className }: { className?: string }) {
     let dpr = 1;
     let raf = 0;
     let running = false;
-    let inView = true;
     let startTime = 0;
 
     // pointer state lives outside React — no re-renders in the hot path
     const pointer = { x: 0, y: 0, tx: 0, ty: 0, strength: 0, active: false };
 
     const rebuild = () => {
-      const rect = container.getBoundingClientRect();
-      width = Math.max(1, Math.round(rect.width));
-      height = Math.max(1, Math.round(rect.height));
+      width = Math.max(1, window.innerWidth);
+      height = Math.max(1, window.innerHeight);
       dpr = Math.min(window.devicePixelRatio || 1, 2);
 
       canvas.width = width * dpr;
@@ -119,7 +117,7 @@ export default function PcbBackground({ className }: { className?: string }) {
 
       const fade = Math.min(elapsed / FADE_IN_MS, 1);
       const easedFade = 1 - Math.pow(1 - fade, 3);
-      const breathe = 1 + 0.2 * Math.sin((elapsed / BREATHE_PERIOD_MS) * Math.PI * 2);
+      const breathe = 1 + 0.15 * Math.sin((elapsed / BREATHE_PERIOD_MS) * Math.PI * 2);
 
       // smooth pointer follow + eased glow strength
       pointer.x += (pointer.tx - pointer.x) * 0.14;
@@ -133,7 +131,7 @@ export default function PcbBackground({ className }: { className?: string }) {
 
       if (pointer.strength > 0.01) {
         renderSpot();
-        ctx.globalAlpha = 0.85 * pointer.strength * easedFade;
+        ctx.globalAlpha = 0.9 * pointer.strength * easedFade;
         ctx.drawImage(
           spot,
           pointer.x - glowRadius,
@@ -148,7 +146,7 @@ export default function PcbBackground({ className }: { className?: string }) {
     };
 
     const start = () => {
-      if (!running && inView) {
+      if (!running) {
         running = true;
         raf = requestAnimationFrame(frame);
       }
@@ -174,27 +172,25 @@ export default function PcbBackground({ className }: { className?: string }) {
     }
 
     const onPointerMove = (e: PointerEvent) => {
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const inside = x >= 0 && y >= 0 && x <= rect.width && y <= rect.height;
-      pointer.active = inside;
-      if (inside) {
-        pointer.tx = x;
-        pointer.ty = y;
-        if (pointer.strength < 0.01) {
-          // snap on first entry so the glow doesn't fly across the screen
-          pointer.x = x;
-          pointer.y = y;
-        }
+      pointer.active = true;
+      pointer.tx = e.clientX;
+      pointer.ty = e.clientY;
+      if (pointer.strength < 0.01) {
+        // snap on first movement so the glow doesn't fly across the screen
+        pointer.x = e.clientX;
+        pointer.y = e.clientY;
       }
     };
     const onPointerLeave = () => {
       pointer.active = false;
     };
+    const onVisibility = () => {
+      if (document.hidden) stop();
+      else if (!reducedMotion) start();
+    };
 
     let resizeTimer = 0;
-    const resizeObserver = new ResizeObserver(() => {
+    const onResize = () => {
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         const wasRunning = running;
@@ -202,19 +198,11 @@ export default function PcbBackground({ className }: { className?: string }) {
         startTime = 0;
         rebuild();
         if (reducedMotion) renderStatic();
-        else if (wasRunning || inView) start();
+        else if (wasRunning) start();
       }, 150);
-    });
-    resizeObserver.observe(container);
-
-    // pause compositing entirely once the hero is scrolled out of view
-    const intersectionObserver = new IntersectionObserver(([entry]) => {
-      inView = entry.isIntersecting;
-      if (reducedMotion) return;
-      if (inView) start();
-      else stop();
-    });
-    intersectionObserver.observe(container);
+    };
+    window.addEventListener("resize", onResize);
+    document.addEventListener("visibilitychange", onVisibility);
 
     if (!reducedMotion) {
       window.addEventListener("pointermove", onPointerMove, { passive: true });
@@ -224,16 +212,12 @@ export default function PcbBackground({ className }: { className?: string }) {
     return () => {
       stop();
       window.clearTimeout(resizeTimer);
-      resizeObserver.disconnect();
-      intersectionObserver.disconnect();
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("blur", onPointerLeave);
     };
   }, []);
 
-  return (
-    <div ref={containerRef} className={className} aria-hidden="true">
-      <canvas ref={canvasRef} className="h-full w-full" />
-    </div>
-  );
+  return <canvas ref={canvasRef} aria-hidden="true" className={className} />;
 }

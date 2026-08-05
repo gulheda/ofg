@@ -15,7 +15,7 @@ const contactLinks = [
 ];
 
 const inputClass =
-  "w-full rounded-lg border border-subtle bg-card px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors duration-200 focus:border-accent/60 focus:ring-1 focus:ring-accent/30";
+  "w-full rounded-lg border border-subtle bg-card/85 backdrop-blur-sm px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors duration-200 focus:border-accent/60 focus:ring-1 focus:ring-accent/30";
 
 export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -74,7 +74,7 @@ export default function Contact() {
             </label>
             <button
               type="submit"
-              className="group inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition-all duration-300 hover:bg-blue-500 hover:shadow-glow"
+              className="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-blue-400 via-accent to-blue-700 px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow"
             >
               Gönder
               <Send size={15} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -89,7 +89,7 @@ export default function Contact() {
                 key={link.label}
                 href={link.href}
                 {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                className="group flex items-center gap-4 rounded-xl border border-subtle bg-card px-5 py-4 transition-all duration-300 hover:border-accent/30 hover:bg-card/80"
+                className="group flex items-center gap-4 rounded-xl border border-subtle bg-card/85 backdrop-blur-sm px-5 py-4 transition-all duration-300 hover:border-accent/30 hover:bg-card"
               >
                 <link.icon
                   size={18}

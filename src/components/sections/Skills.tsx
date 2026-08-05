@@ -7,7 +7,7 @@ import { skills } from "@/data/skills";
 
 export default function Skills() {
   return (
-    <Section id="yetkinlikler" className="bg-surface">
+    <Section id="yetkinlikler" className="bg-surface/65 backdrop-blur-sm">
       <SectionHeading
         eyebrow="02 — Teknik Yetkinlikler"
         title="Araç kutum"
@@ -16,7 +16,7 @@ export default function Skills() {
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {skills.map((skill, i) => (
           <Reveal key={skill.name} variant="scale" delay={(i % 6) * 0.05}>
-            <li className="group relative rounded-xl border border-subtle bg-card transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-sm">
+            <li className="group relative rounded-xl border border-subtle bg-card/85 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-sm">
               <TechnicalCorners />
               <TiltCard className="relative overflow-hidden rounded-xl p-4" maxTilt={10}>
                 {/* faint accent wash that fades in on hover */}

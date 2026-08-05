@@ -20,8 +20,9 @@ function drawGeometry(
   layout: PcbLayout,
   strokeFor: (tint: number) => string,
   fill: string,
+  lineWidth: number,
 ) {
-  ctx.lineWidth = 1;
+  ctx.lineWidth = lineWidth;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
 
@@ -76,24 +77,48 @@ function drawGeometry(
   }
 }
 
-/** Neutral layer — composited at 3–8% alpha so it whispers, not shouts. */
+const tintColor = (tint: number, cyan: string, violet: string, blue: string) => {
+  if (tint < 0.15) return cyan;
+  if (tint > 0.9) return violet;
+  return blue;
+};
+
+/**
+ * Resting layer — this is the board's always-visible identity, not a hairline
+ * hint. Two passes: a soft blurred glow underlay, then a crisp bright core,
+ * so it reads unmistakably as an energised circuit rather than flat gray art.
+ */
 export function renderBaseLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout) {
-  drawGeometry(ctx, layout, () => "rgba(226,232,240,1)", "rgba(226,232,240,0.9)");
+  const strokeFor = (tint: number) =>
+    tintColor(tint, "rgba(103,232,249,0.85)", "rgba(167,139,250,0.8)", "rgba(96,165,250,0.9)");
+
+  ctx.save();
+  ctx.shadowColor = "rgba(59,130,246,0.9)";
+  ctx.shadowBlur = 9;
+  ctx.globalAlpha = 0.6;
+  drawGeometry(ctx, layout, strokeFor, "rgba(147,197,253,0.7)", 1.3);
+  ctx.restore();
+
+  ctx.save();
+  drawGeometry(ctx, layout, strokeFor, "rgba(191,219,254,0.9)", 1);
+  ctx.restore();
 }
 
 /**
- * Accent layer — electric blue with faint cyan/violet drift per net.
- * Only ever visible through the radial pointer mask.
+ * Accent layer — the same board, brighter and warmer, revealed only through
+ * the radial pointer mask so the board feels like it lights up under touch.
  */
 export function renderLitLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout) {
-  const strokeFor = (tint: number) => {
-    if (tint < 0.15) return "rgba(34,211,238,0.95)"; // cyan
-    if (tint > 0.9) return "rgba(139,92,246,0.95)"; // violet
-    return "rgba(59,130,246,0.95)"; // electric blue
-  };
+  const strokeFor = (tint: number) =>
+    tintColor(tint, "rgba(34,211,238,1)", "rgba(167,139,250,1)", "rgba(59,130,246,1)");
+
   ctx.save();
-  ctx.shadowColor = "rgba(59,130,246,0.55)";
-  ctx.shadowBlur = 6;
-  drawGeometry(ctx, layout, strokeFor, "rgba(96,165,250,0.95)");
+  ctx.shadowColor = "rgba(59,130,246,0.95)";
+  ctx.shadowBlur = 16;
+  drawGeometry(ctx, layout, strokeFor, "rgba(96,165,250,1)", 1.4);
+  ctx.restore();
+
+  ctx.save();
+  drawGeometry(ctx, layout, strokeFor, "rgba(224,242,254,1)", 1.1);
   ctx.restore();
 }
