@@ -23,7 +23,16 @@ interface TextRevealProps {
   trigger?: "inView" | "mount";
 }
 
-/** A line of text that rises up from behind a mask instead of just fading in — the agency-site staple. */
+/**
+ * A line of text that rises up from behind a mask instead of just fading in.
+ *
+ * Always renders the same motion element regardless of reduced-motion state
+ * (only the animate/whileInView props change) — switching between a plain
+ * tag and a motion tag based on a value that starts unresolved during SSR
+ * previously left the text permanently clipped for users with a system-level
+ * "reduce motion" preference, since `initial` is only honoured on mount and
+ * a later prop swap doesn't get a second chance to apply it.
+ */
 export default function TextReveal({
   children,
   delay = 0,
@@ -34,22 +43,21 @@ export default function TextReveal({
   const reducedMotion = useReducedMotion();
   const MotionTag = TAGS[as];
 
-  if (reducedMotion) {
-    const Plain = as;
-    return <Plain className={className}>{children}</Plain>;
-  }
-
-  const viewProps =
-    trigger === "mount"
-      ? { initial: "hidden", animate: "visible" }
-      : { initial: "hidden", whileInView: "visible", viewport: { once: true, margin: "-40px" } };
+  // `animate` is reactive to prop changes (unlike `initial`), so forcing it to
+  // "visible" here reliably unclips the text even if reducedMotion starts
+  // false during SSR and only resolves to true after mount.
+  const animate = reducedMotion || trigger === "mount" ? "visible" : undefined;
+  const whileInView = !reducedMotion && trigger === "inView" ? "visible" : undefined;
 
   return (
     <MotionTag
       className={className}
       variants={variants}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
-      {...viewProps}
+      initial="hidden"
+      animate={animate}
+      whileInView={whileInView}
+      viewport={whileInView ? { once: true, margin: "-40px" } : undefined}
+      transition={{ duration: reducedMotion ? 0 : 0.7, delay: reducedMotion ? 0 : delay, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
     </MotionTag>

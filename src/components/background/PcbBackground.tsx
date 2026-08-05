@@ -18,6 +18,12 @@ const BREATHE_PERIOD_MS = 9000;
  * offscreen layers (resting + accent). The rAF loop only composites bitmaps —
  * a full-viewport drawImage plus a small masked "spotlight" around the
  * pointer — so per-frame CPU cost stays minimal and 60fps is trivial to hold.
+ *
+ * prefers-reduced-motion only turns off the one truly ambient, autoplaying
+ * bit (the slow breathing pulse) — the pointer glow and scroll response are
+ * direct reactions to the user's own input, not autoplay, so they stay on;
+ * otherwise a system-level "reduce motion" setting would make the whole
+ * board go flat and static with no way to tell it was ever there.
  */
 export default function PcbBackground({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -121,9 +127,9 @@ export default function PcbBackground({ className }: { className?: string }) {
       if (!startTime) startTime = now;
       const elapsed = now - startTime;
 
-      const fade = Math.min(elapsed / FADE_IN_MS, 1);
+      const fade = reducedMotion ? 1 : Math.min(elapsed / FADE_IN_MS, 1);
       const easedFade = 1 - Math.pow(1 - fade, 3);
-      const breathe = 1 + 0.15 * Math.sin((elapsed / BREATHE_PERIOD_MS) * Math.PI * 2);
+      const breathe = reducedMotion ? 1 : 1 + 0.15 * Math.sin((elapsed / BREATHE_PERIOD_MS) * Math.PI * 2);
 
       // scroll speed → soft motion blur + slight scale, settles back at rest
       if (!lastFrameTime) lastFrameTime = now;
@@ -174,20 +180,8 @@ export default function PcbBackground({ className }: { className?: string }) {
       cancelAnimationFrame(raf);
     };
 
-    const renderStatic = () => {
-      ctx.clearRect(0, 0, width, height);
-      ctx.globalAlpha = BASE_ALPHA;
-      ctx.drawImage(base, 0, 0, width, height);
-      ctx.globalAlpha = 1;
-    };
-
     rebuild();
-
-    if (reducedMotion) {
-      renderStatic();
-    } else {
-      start();
-    }
+    start();
 
     const onPointerMove = (e: PointerEvent) => {
       pointer.active = true;
@@ -204,7 +198,7 @@ export default function PcbBackground({ className }: { className?: string }) {
     };
     const onVisibility = () => {
       if (document.hidden) stop();
-      else if (!reducedMotion) start();
+      else start();
     };
 
     let resizeTimer = 0;
@@ -215,17 +209,13 @@ export default function PcbBackground({ className }: { className?: string }) {
         stop();
         startTime = 0;
         rebuild();
-        if (reducedMotion) renderStatic();
-        else if (wasRunning) start();
+        if (wasRunning) start();
       }, 150);
     };
     window.addEventListener("resize", onResize);
     document.addEventListener("visibilitychange", onVisibility);
-
-    if (!reducedMotion) {
-      window.addEventListener("pointermove", onPointerMove, { passive: true });
-      window.addEventListener("blur", onPointerLeave);
-    }
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("blur", onPointerLeave);
 
     return () => {
       stop();

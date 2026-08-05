@@ -6,6 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 const BOOT_DURATION_MS = 1200;
 const HOLD_MS = 250;
 const FADE_MS = 550;
+/** Under reduced motion the fill is skipped, but the branding still holds briefly before fading. */
+const STATIC_HOLD_MS = 500;
 
 /** A real boot sequence before the page reveals itself — the opening half of the site's bookend. */
 export default function IntroOverlay() {
@@ -15,9 +17,13 @@ export default function IntroOverlay() {
 
   useEffect(() => {
     if (reducedMotion) {
-      setVisible(false);
-      return;
+      // Skip the animated fill — a system-level "reduce motion" preference should
+      // never make this branding moment disappear entirely, just lose the motion.
+      setProgress(100);
+      const timer = window.setTimeout(() => setVisible(false), STATIC_HOLD_MS);
+      return () => window.clearTimeout(timer);
     }
+
     let raf = 0;
     const start = performance.now();
 
@@ -34,8 +40,6 @@ export default function IntroOverlay() {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [reducedMotion]);
-
-  if (reducedMotion) return null;
 
   return (
     <AnimatePresence>

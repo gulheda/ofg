@@ -10,14 +10,15 @@ const ease: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
 export default function Hero() {
   const reducedMotion = useReducedMotion();
 
-  const enter = (delay: number) =>
-    reducedMotion
-      ? {}
-      : {
-          initial: { opacity: 0, y: 20 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: 0.7, delay, ease },
-        };
+  // Always provide the same initial/animate shape — `initial` only applies on
+  // first mount, so conditionally stripping these props to {} once reducedMotion
+  // resolves true (often after SSR/first paint) leaves elements stuck at their
+  // hidden initial state forever. Only the transition timing varies.
+  const enter = (delay: number) => ({
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: reducedMotion ? 0 : 0.7, delay: reducedMotion ? 0 : delay, ease },
+  });
 
   return (
     <section className="relative flex min-h-svh items-center overflow-hidden">
