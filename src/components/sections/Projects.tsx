@@ -3,6 +3,7 @@ import Section from "@/components/ui/Section";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
 import ProjectVisual from "@/components/ui/ProjectVisual";
+import TechnicalCorners from "@/components/ui/TechnicalCorners";
 import { projects } from "@/data/projects";
 
 export default function Projects() {
@@ -17,10 +18,20 @@ export default function Projects() {
         {projects.map((project, i) => (
           <Reveal key={project.title} delay={(i % 2) * 0.1}>
             <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-subtle bg-card transition-all duration-300 hover:-translate-y-1.5 hover:border-accent/30 hover:shadow-glow">
-              <div className="aspect-[16/9] border-b border-subtle bg-surface">
+              <TechnicalCorners />
+              <div className="relative aspect-[16/9] border-b border-subtle bg-surface">
                 <ProjectVisual variant={project.visual} />
+                <span className="absolute left-3 top-3 rounded-md border border-subtle bg-background/80 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-zinc-400 backdrop-blur-sm">
+                  PRJ-{String(i + 1).padStart(2, "0")}
+                </span>
               </div>
-              <div className="flex flex-1 flex-col p-6">
+              {/* dimension-line tick strip bridging image and copy */}
+              <div className="flex items-center gap-1 px-6 pt-3" aria-hidden="true">
+                <span className="h-2 w-px bg-zinc-700" />
+                <span className="h-px flex-1 bg-zinc-800" />
+                <span className="h-2 w-px bg-zinc-700" />
+              </div>
+              <div className="flex flex-1 flex-col p-6 pt-3">
                 <h3 className="text-lg font-medium tracking-tight text-zinc-50">
                   {project.title}
                 </h3>

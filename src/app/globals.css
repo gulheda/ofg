@@ -22,3 +22,30 @@
     color: #fafafa;
   }
 }
+
+@layer utilities {
+  /* Faint engineering-drawing graph paper — visible only where sections leave the flat background exposed. */
+  .bg-blueprint-grid {
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .signal-line {
+    stroke-dasharray: 10 8;
+    animation: signal-dash 5s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .signal-line {
+      animation: none;
+    }
+  }
+}
+
+@keyframes signal-dash {
+  to {
+    stroke-dashoffset: -180;
+  }
+}
