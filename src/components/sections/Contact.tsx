@@ -15,7 +15,7 @@ const secondaryLinks = [
 
 export default function Contact() {
   return (
-    <Section id="iletisim">
+    <Section id="iletisim" className="bg-surface/70 backdrop-blur-md">
       <Reveal variant="fade">
         <p className="mb-4 font-mono text-xs uppercase tracking-[0.25em] text-accent">
           06 — İletişim
@@ -25,7 +25,7 @@ export default function Contact() {
       <TextReveal
         as="h2"
         delay={0.05}
-        className="text-4xl font-semibold tracking-tight text-zinc-50 sm:text-5xl md:text-6xl"
+        className="text-3xl font-semibold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl"
       >
         Birlikte neler yapabiliriz?
       </TextReveal>
@@ -40,7 +40,7 @@ export default function Contact() {
       <Reveal variant="slide-up" delay={0.3}>
         <a
           href={`mailto:${site.email}`}
-          className="circuit-link group mt-12 inline-flex max-w-full items-center gap-2 break-all text-xl font-medium text-zinc-100 transition-colors duration-300 hover:text-accent sm:gap-3 sm:text-2xl md:text-3xl lg:text-4xl"
+          className="circuit-link group mt-12 inline-flex max-w-full items-center gap-2 break-all text-lg font-medium text-zinc-100 transition-colors duration-300 hover:text-accent sm:gap-3 sm:text-xl md:text-2xl lg:text-3xl"
         >
           {site.email}
           <ArrowUpRight

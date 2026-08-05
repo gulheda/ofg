@@ -5,7 +5,7 @@ import { generatePcb } from "@/lib/pcb/generate";
 import { renderBaseLayer, renderLitLayer } from "@/lib/pcb/render";
 
 /** Resting opacity of the copper layer (breathes ±15% around this). */
-const BASE_ALPHA = 0.6;
+const BASE_ALPHA = 0.85;
 const FADE_IN_MS = 1600;
 const BREATHE_PERIOD_MS = 9000;
 
@@ -40,8 +40,8 @@ export default function PcbBackground({ className }: { className?: string }) {
       window.matchMedia("(max-width: 768px)").matches ||
       window.matchMedia("(pointer: coarse)").matches;
 
-    const density = isMobile ? 0.5 : 1.3;
-    const glowRadius = isMobile ? 100 : 170;
+    const density = isMobile ? 0.7 : 1.8;
+    const glowRadius = isMobile ? 130 : 220;
 
     const base = document.createElement("canvas");
     const lit = document.createElement("canvas");

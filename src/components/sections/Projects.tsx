@@ -6,7 +6,7 @@ import { projects } from "@/data/projects";
 
 export default function Projects() {
   return (
-    <Section id="projeler">
+    <Section id="projeler" className="bg-surface/70 backdrop-blur-md">
       <SectionHeading
         eyebrow="03 — Projeler"
         title="Seçili çalışmalar"
@@ -21,7 +21,7 @@ export default function Projects() {
               </span>
 
               <div>
-                <h3 className="text-2xl font-semibold tracking-tight text-zinc-50 md:text-3xl">
+                <h3 className="text-xl font-semibold tracking-tight text-zinc-50 md:text-2xl">
                   {project.title}
                 </h3>
                 <p className="mt-1.5 font-mono text-xs uppercase tracking-wide text-accent/80">

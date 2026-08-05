@@ -23,12 +23,12 @@ const focusAreas = [
 
 export default function About() {
   return (
-    <Section id="hakkimda">
+    <Section id="hakkimda" className="bg-surface/70 backdrop-blur-md">
       <SectionHeading eyebrow="01 — Hakkımda" title="Aviyonikle düşünen, sahada uçuran bir mühendis adayı" />
 
       <div className="grid gap-10 lg:grid-cols-12">
         <Reveal className="lg:col-span-6">
-          <p className="text-xl leading-relaxed text-zinc-100 md:text-[1.6rem] md:leading-[1.45]">
+          <p className="text-lg leading-relaxed text-zinc-100 md:text-xl md:leading-[1.5]">
             Balıkesir Üniversitesi <span className="font-mono text-accent">Elektrik-Elektronik Mühendisliği</span> 3.
             sınıf öğrencisiyim. <span className="font-mono text-accent">Aviyonik sistemler</span> ve{" "}
             <span className="font-mono text-accent">PCB tasarımı</span> üzerine çalışıyorum.

@@ -79,14 +79,14 @@ function drawGeometry(
 
 /** Muted slate-blue ink for the resting board — reads as a blueprint print, not an RGB keyboard. */
 const restShade = (tint: number, alpha: number) => {
-  const l = 34 + tint * 16; // 34%–50% lightness, low saturation
-  return `hsla(216, 22%, ${l}%, ${alpha})`;
+  const l = 42 + tint * 20; // 42%–62% lightness, low saturation — brighter against the lighter navy background
+  return `hsla(216, 28%, ${l}%, ${alpha})`;
 };
 
 /** More saturated, but still restrained — the same board, awake, not neon. */
 const litShade = (tint: number, alpha: number) => {
-  const l = 48 + tint * 20; // 48%–68%
-  return `hsla(217, 62%, ${l}%, ${alpha})`;
+  const l = 52 + tint * 22; // 52%–74%
+  return `hsla(217, 68%, ${l}%, ${alpha})`;
 };
 
 /**
