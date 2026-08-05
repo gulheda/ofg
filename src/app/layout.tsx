@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { site } from "@/data/site";
 import TechnicalFrame from "@/components/layout/TechnicalFrame";
 import PcbBackground from "@/components/background/PcbBackground";
+import IntroOverlay from "@/components/layout/IntroOverlay";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PcbBackground className="pointer-events-none fixed inset-0 -z-10" />
         <TechnicalFrame />
         {children}
+        <IntroOverlay />
       </body>
     </html>
   );

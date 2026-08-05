@@ -51,9 +51,12 @@ export default function Hero() {
 
           <motion.p
             {...enter(0.32)}
-            className="mt-6 max-w-xl text-base leading-relaxed text-zinc-400 md:text-lg"
+            className="mt-6 max-w-2xl text-lg leading-relaxed text-zinc-300 md:text-xl"
           >
-            {site.tagline}
+            <span className="text-zinc-100">Teknofest İHA</span> takımında elektronik alt
+            sistem ekibini yöneten; <span className="font-mono text-accent">güç dağıtımından</span>{" "}
+            <span className="font-mono text-accent">RF</span> haberleşmeye, aviyonik sistemleri
+            tasarlayıp sahada uçuran bir Elektrik-Elektronik Mühendisliği öğrencisi.
           </motion.p>
 
           <motion.div {...enter(0.44)} className="mt-10 flex flex-wrap items-center gap-4">

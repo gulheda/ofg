@@ -77,46 +77,52 @@ function drawGeometry(
   }
 }
 
-/** Single hue, varying only in lightness by net — reads as one serious board, not a string of party lights. */
-const shade = (tint: number, alpha: number) => {
-  const l = 55 + tint * 24; // 55%–79% lightness
-  return `hsla(219, 88%, ${l}%, ${alpha})`;
+/** Muted slate-blue ink for the resting board — reads as a blueprint print, not an RGB keyboard. */
+const restShade = (tint: number, alpha: number) => {
+  const l = 34 + tint * 16; // 34%–50% lightness, low saturation
+  return `hsla(216, 22%, ${l}%, ${alpha})`;
+};
+
+/** More saturated, but still restrained — the same board, awake, not neon. */
+const litShade = (tint: number, alpha: number) => {
+  const l = 48 + tint * 20; // 48%–68%
+  return `hsla(217, 62%, ${l}%, ${alpha})`;
 };
 
 /**
- * Resting layer — this is the board's always-visible identity, not a hairline
- * hint. Two passes: a soft blurred glow underlay, then a crisp bright core,
- * so it reads unmistakably as an energised circuit rather than flat gray art.
+ * Resting layer — the board's always-visible identity, printed in quiet
+ * slate ink. A faint glow pass keeps it from looking flat, without reading
+ * as an energised light show.
  */
 export function renderBaseLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout) {
-  const strokeFor = (tint: number) => shade(tint, 0.85);
+  const strokeFor = (tint: number) => restShade(tint, 0.9);
 
   ctx.save();
-  ctx.shadowColor = "rgba(47,111,238,0.9)";
-  ctx.shadowBlur = 8;
-  ctx.globalAlpha = 0.55;
-  drawGeometry(ctx, layout, strokeFor, shade(0.5, 0.65), 1.3);
+  ctx.shadowColor = "rgba(100,120,160,0.5)";
+  ctx.shadowBlur = 3;
+  ctx.globalAlpha = 0.5;
+  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.6), 1.15);
   ctx.restore();
 
   ctx.save();
-  drawGeometry(ctx, layout, strokeFor, shade(0.5, 0.9), 1);
+  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.95), 1);
   ctx.restore();
 }
 
 /**
- * Accent layer — the same board, brighter, revealed only through the radial
- * pointer mask so the board feels like it lights up under touch.
+ * Accent layer — revealed only through the radial pointer mask, so the
+ * board feels like it wakes up under touch instead of shouting constantly.
  */
 export function renderLitLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout) {
-  const strokeFor = (tint: number) => shade(tint, 1);
+  const strokeFor = (tint: number) => litShade(tint, 1);
 
   ctx.save();
-  ctx.shadowColor = "rgba(47,111,238,0.95)";
-  ctx.shadowBlur = 15;
-  drawGeometry(ctx, layout, strokeFor, shade(0.6, 1), 1.4);
+  ctx.shadowColor = "rgba(47,111,238,0.7)";
+  ctx.shadowBlur = 10;
+  drawGeometry(ctx, layout, strokeFor, litShade(0.6, 1), 1.3);
   ctx.restore();
 
   ctx.save();
-  drawGeometry(ctx, layout, strokeFor, "rgba(224,234,255,1)", 1.1);
+  drawGeometry(ctx, layout, strokeFor, "rgba(203,216,240,1)", 1.05);
   ctx.restore();
 }

@@ -1,4 +1,4 @@
-import Sidebar from "@/components/layout/Sidebar";
+import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/Hero";
 import Telemetry from "@/components/sections/Telemetry";
@@ -12,20 +12,18 @@ import Contact from "@/components/sections/Contact";
 export default function Home() {
   return (
     <>
-      <Sidebar />
-      <div className="lg:pl-56">
-        <main>
-          <Hero />
-          <Telemetry />
-          <About />
-          <Skills />
-          <Projects />
-          <Experience />
-          <Education />
-          <Contact />
-        </main>
-        <Footer />
-      </div>
+      <Navbar />
+      <main>
+        <Hero />
+        <Telemetry />
+        <About />
+        <Skills />
+        <Projects />
+        <Experience />
+        <Education />
+        <Contact />
+      </main>
+      <Footer />
     </>
   );
 }

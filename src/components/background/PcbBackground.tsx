@@ -5,7 +5,7 @@ import { generatePcb } from "@/lib/pcb/generate";
 import { renderBaseLayer, renderLitLayer } from "@/lib/pcb/render";
 
 /** Resting opacity of the copper layer (breathes ±15% around this). */
-const BASE_ALPHA = 0.38;
+const BASE_ALPHA = 0.6;
 const FADE_IN_MS = 1600;
 const BREATHE_PERIOD_MS = 9000;
 
@@ -50,6 +50,12 @@ export default function PcbBackground({ className }: { className?: string }) {
 
     // pointer state lives outside React — no re-renders in the hot path
     const pointer = { x: 0, y: 0, tx: 0, ty: 0, strength: 0, active: false };
+
+    // scroll-velocity state — drives a soft motion blur, like the board is rushing past
+    let lastScrollY = window.scrollY;
+    let lastFrameTime = 0;
+    let smoothSpeed = 0;
+    canvas.style.willChange = "transform, filter";
 
     const rebuild = () => {
       width = Math.max(1, window.innerWidth);
@@ -118,6 +124,18 @@ export default function PcbBackground({ className }: { className?: string }) {
       const fade = Math.min(elapsed / FADE_IN_MS, 1);
       const easedFade = 1 - Math.pow(1 - fade, 3);
       const breathe = 1 + 0.15 * Math.sin((elapsed / BREATHE_PERIOD_MS) * Math.PI * 2);
+
+      // scroll speed → soft motion blur + slight scale, settles back at rest
+      if (!lastFrameTime) lastFrameTime = now;
+      const dt = Math.max(now - lastFrameTime, 1);
+      lastFrameTime = now;
+      const scrollY = window.scrollY;
+      const rawSpeed = Math.abs(scrollY - lastScrollY) / dt;
+      lastScrollY = scrollY;
+      smoothSpeed += (rawSpeed - smoothSpeed) * 0.12;
+      const speedT = Math.min(smoothSpeed / 2.6, 1);
+      canvas.style.filter = speedT > 0.02 ? `blur(${(speedT * 2.2).toFixed(2)}px)` : "";
+      canvas.style.transform = `scale(${(1 + speedT * 0.014).toFixed(4)})`;
 
       // smooth pointer follow + eased glow strength
       pointer.x += (pointer.tx - pointer.x) * 0.14;

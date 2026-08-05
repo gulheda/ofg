@@ -1,112 +1,95 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { FileDown, Linkedin, Mail, Phone, Send } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowUpRight, FileDown, Linkedin, Phone } from "lucide-react";
 import Section from "@/components/ui/Section";
-import SectionHeading from "@/components/ui/SectionHeading";
 import Reveal from "@/components/ui/Reveal";
+import TextReveal from "@/components/ui/TextReveal";
 import { site } from "@/data/site";
 
-const contactLinks = [
+const secondaryLinks = [
   { icon: Linkedin, label: "LinkedIn", href: site.linkedin, external: true },
-  { icon: Mail, label: site.email, href: `mailto:${site.email}`, external: false },
   { icon: Phone, label: site.phone, href: site.phoneHref, external: false },
   { icon: FileDown, label: "CV İndir", href: site.cvUrl, external: false },
 ];
 
-const inputClass =
-  "w-full rounded-lg border border-subtle bg-card/70 backdrop-blur-sm px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none transition-colors duration-200 focus:border-accent/60 focus:ring-1 focus:ring-accent/30";
-
 export default function Contact() {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
-
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const subject = encodeURIComponent(`Portfolyo üzerinden mesaj — ${form.name}`);
-    const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`);
-    window.location.href = `mailto:${site.email}?subject=${subject}&body=${body}`;
-  };
-
   return (
     <Section id="iletisim">
-      <SectionHeading
-        eyebrow="06 — İletişim"
-        title="Birlikte çalışalım"
-        description="Bir proje fikriniz mi var, staj ya da iş birliği mi konuşmak istiyorsunuz? Mesajınızı bekliyorum."
-      />
-      <div className="grid gap-12 lg:grid-cols-2">
-        <Reveal>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-zinc-400">Ad Soyad</span>
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Adınız"
-                  className={inputClass}
-                />
-              </label>
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium text-zinc-400">E-posta</span>
-                <input
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="ornek@mail.com"
-                  className={inputClass}
-                />
-              </label>
-            </div>
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-medium text-zinc-400">Mesaj</span>
-              <textarea
-                required
-                rows={5}
-                value={form.message}
-                onChange={(e) => setForm({ ...form, message: e.target.value })}
-                placeholder="Merhaba Ömer, ..."
-                className={`${inputClass} resize-none`}
-              />
-            </label>
-            <button
-              type="submit"
-              className="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-blue-400 via-accent to-blue-700 px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow"
-            >
-              Gönder
-              <Send size={15} className="transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </button>
-          </form>
-        </Reveal>
+      <Reveal variant="fade">
+        <p className="mb-4 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+          06 — İletişim
+        </p>
+      </Reveal>
 
-        <Reveal variant="slide-left" delay={0.1}>
-          <div className="space-y-3">
-            {contactLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                className="group flex items-center gap-4 rounded-xl border border-subtle bg-card/70 backdrop-blur-sm px-5 py-4 transition-all duration-300 hover:border-accent/30 hover:bg-card"
-              >
-                <link.icon
-                  size={18}
-                  className="text-zinc-500 transition-colors duration-300 group-hover:text-accent"
-                />
-                <span className="text-sm text-zinc-300 transition-colors group-hover:text-zinc-100">
-                  {link.label}
-                </span>
-              </a>
-            ))}
-            <p className="pt-4 text-sm leading-relaxed text-zinc-500">
-              Genellikle 24 saat içinde dönüş yaparım. Takım çalışmaları, yarışma iş
-              birlikleri ve staj fırsatları için LinkedIn üzerinden de ulaşabilirsiniz.
-            </p>
-          </div>
-        </Reveal>
-      </div>
+      <TextReveal
+        as="h2"
+        delay={0.05}
+        className="text-4xl font-semibold tracking-tight text-zinc-50 sm:text-5xl md:text-6xl"
+      >
+        Birlikte neler yapabiliriz?
+      </TextReveal>
+
+      <Reveal variant="fade" delay={0.2}>
+        <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-400">
+          Bir proje fikriniz mi var, staj ya da yarışma iş birliği mi konuşmak
+          istiyorsunuz? Mesajınızı bekliyorum.
+        </p>
+      </Reveal>
+
+      <Reveal variant="slide-up" delay={0.3}>
+        <a
+          href={`mailto:${site.email}`}
+          className="circuit-link group mt-12 inline-flex max-w-full items-center gap-2 break-all text-xl font-medium text-zinc-100 transition-colors duration-300 hover:text-accent sm:gap-3 sm:text-2xl md:text-3xl lg:text-4xl"
+        >
+          {site.email}
+          <ArrowUpRight
+            size={24}
+            className="hidden shrink-0 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 sm:block"
+          />
+        </a>
+      </Reveal>
+
+      <Reveal variant="fade" delay={0.42}>
+        <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-subtle pt-8">
+          {secondaryLinks.map((link) => (
+            <a
+              key={link.label}
+              href={link.href}
+              {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className="circuit-link inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
+            >
+              <link.icon size={16} />
+              {link.label}
+            </a>
+          ))}
+        </div>
+      </Reveal>
+
+      <ClosingSeal />
     </Section>
+  );
+}
+
+/** The site's last word — two traces closing inward, mirroring the opening sequence at first load. */
+function ClosingSeal() {
+  return (
+    <div className="mt-24 flex items-center gap-4" aria-hidden="true">
+      <motion.span
+        className="h-px flex-1 origin-right bg-gradient-to-r from-transparent to-accent"
+        initial={{ scaleX: 0 }}
+        whileInView={{ scaleX: 1 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+      />
+      <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">EOF</span>
+      <motion.span
+        className="h-px flex-1 origin-left bg-gradient-to-l from-transparent to-accent"
+        initial={{ scaleX: 0 }}
+        whileInView={{ scaleX: 1 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+      />
+    </div>
   );
 }

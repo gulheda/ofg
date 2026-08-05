@@ -6,15 +6,15 @@ import { stats } from "@/data/stats";
 /** A cockpit-telemetry-styled stat strip — the numbers behind the CV, read like instrument readouts. */
 export default function Telemetry() {
   return (
-    <section className="relative border-y border-subtle bg-surface/45 py-14 md:py-16">
+    <section className="relative border-y border-subtle bg-surface/70 py-14 backdrop-blur-md md:py-16">
       <div className="mx-auto w-full max-w-content px-6 md:px-8">
-        <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.25em] text-zinc-600">
+        <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.25em] text-zinc-400">
           Sahada Ölçülen Sayılar
         </p>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {stats.map((stat, i) => (
             <Reveal key={stat.label} variant="scale" delay={i * 0.07}>
-              <div className="rounded-xl border border-subtle bg-card/70 backdrop-blur-sm">
+              <div className="rounded-xl border border-subtle bg-card/80 backdrop-blur-md">
                 <TiltCard className="overflow-hidden rounded-xl p-5" maxTilt={6}>
                   <p className="text-3xl font-semibold tracking-tight text-zinc-50 md:text-4xl">
                     {typeof stat.value === "number" ? (

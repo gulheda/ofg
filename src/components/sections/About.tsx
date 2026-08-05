@@ -28,9 +28,10 @@ export default function About() {
 
       <div className="grid gap-10 lg:grid-cols-12">
         <Reveal className="lg:col-span-6">
-          <p className="text-xl leading-relaxed text-zinc-200 md:text-[1.6rem] md:leading-[1.45]">
-            Balıkesir Üniversitesi Elektrik-Elektronik Mühendisliği 3. sınıf
-            öğrencisiyim. Aviyonik sistemler ve PCB tasarımı üzerine çalışıyorum.
+          <p className="text-xl leading-relaxed text-zinc-100 md:text-[1.6rem] md:leading-[1.45]">
+            Balıkesir Üniversitesi <span className="font-mono text-accent">Elektrik-Elektronik Mühendisliği</span> 3.
+            sınıf öğrencisiyim. <span className="font-mono text-accent">Aviyonik sistemler</span> ve{" "}
+            <span className="font-mono text-accent">PCB tasarımı</span> üzerine çalışıyorum.
           </p>
         </Reveal>
         <Reveal variant="slide-left" delay={0.12} className="lg:col-span-6">
