@@ -78,21 +78,22 @@ function drawGeometry(
 }
 
 /**
- * Muted ink for the resting board — hue drifts across the tint spectrum
- * (steel blue → indigo → soft violet) so the print reads as one considered
- * palette instead of a single flat slate tone repeated everywhere.
+ * Ink for the resting board — one consistent sapphire-blue hue (not a hue
+ * drift into indigo/violet, which read as a muddy, uncertain colour rather
+ * than a considered night-blue palette) with real saturation so it reads as
+ * a deep jewel tone against the near-black page instead of flat grey-slate.
  */
 const restShade = (tint: number, alpha: number) => {
-  const hue = 212 + tint * 34; // 212°–246°: blue through indigo into violet
-  const l = 38 + tint * 14; // 38%–52% lightness, low saturation
-  return `hsla(${hue}, 30%, ${l}%, ${alpha})`;
+  const hue = 216 + tint * 8; // 216°–224°: a tight, confident blue
+  const l = 42 + tint * 16; // 42%–58%
+  return `hsla(${hue}, 52%, ${l}%, ${alpha})`;
 };
 
-/** More saturated, but still restrained — the same board, awake, not neon. */
+/** Brighter and more saturated — the same board, awake, not neon. */
 const litShade = (tint: number, alpha: number) => {
-  const hue = 214 + tint * 32;
-  const l = 48 + tint * 16; // 48%–64%
-  return `hsla(${hue}, 62%, ${l}%, ${alpha})`;
+  const hue = 216 + tint * 10;
+  const l = 54 + tint * 18; // 54%–72%
+  return `hsla(${hue}, 78%, ${l}%, ${alpha})`;
 };
 
 /**

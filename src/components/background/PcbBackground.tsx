@@ -6,7 +6,7 @@ import { renderBaseLayer, renderLitLayer } from "@/lib/pcb/render";
 import type { Point, Trace } from "@/lib/pcb/types";
 
 /** Resting opacity of the copper layer (breathes ±15% around this). */
-const BASE_ALPHA = 0.6;
+const BASE_ALPHA = 0.72;
 const FADE_IN_MS = 1600;
 const BREATHE_PERIOD_MS = 9000;
 const PULSE_COUNT = 22;
