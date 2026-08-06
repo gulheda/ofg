@@ -64,10 +64,11 @@ export default function Hero() {
           <motion.div {...enter(0.44)} className="mt-10 flex flex-wrap items-center gap-4">
             <a
               href="#projeler"
-              className="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-br from-blue-400 via-accent to-blue-700 px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow"
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-deep px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow"
             >
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
               Projelerimi İncele
-              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+              <ArrowRight size={16} className="relative transition-transform duration-300 group-hover:translate-x-0.5" />
             </a>
             <a
               href={site.cvUrl}

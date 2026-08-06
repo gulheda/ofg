@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useScroll, useSpring } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { navLinks, site } from "@/data/site";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [pulseKey, setPulseKey] = useState(0);
+  const reducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.3 });
 
@@ -33,9 +35,26 @@ export default function Navbar() {
       />
 
       <nav className="mx-auto flex h-16 w-full max-w-content items-center justify-between px-6 md:px-8">
-        <a href="#" className="group flex items-center gap-2.5" aria-label="Ana sayfa">
-          <span className="flex h-3 w-3 items-center justify-center rounded-full border border-accent/70 transition-shadow duration-300 group-hover:shadow-glow-sm">
+        <a
+          href="#"
+          onClick={() => setPulseKey((k) => k + 1)}
+          className="group relative flex items-center gap-2.5"
+          aria-label="Ana sayfa"
+        >
+          <span className="relative flex h-3 w-3 items-center justify-center rounded-full border border-accent/70 transition-shadow duration-300 group-hover:shadow-glow-sm">
             <span className="h-1 w-1 rounded-full bg-accent" />
+            <AnimatePresence>
+              {pulseKey > 0 && !reducedMotion && (
+                <motion.span
+                  key={pulseKey}
+                  className="absolute inset-0 rounded-full border border-accent"
+                  initial={{ scale: 1, opacity: 0.8 }}
+                  animate={{ scale: 3.2, opacity: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.7, ease: [0.21, 0.47, 0.32, 0.98] }}
+                />
+              )}
+            </AnimatePresence>
           </span>
           <span className="font-mono text-sm tracking-wider text-zinc-200">{site.handle}</span>
         </a>

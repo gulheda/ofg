@@ -95,7 +95,7 @@ export default function PcbBackground({ className }: { className?: string }) {
       window.matchMedia("(max-width: 768px)").matches ||
       window.matchMedia("(pointer: coarse)").matches;
 
-    const density = isMobile ? 0.7 : 1.8;
+    const density = isMobile ? 1.05 : 1.8;
     const glowRadius = isMobile ? 130 : 220;
 
     const base = document.createElement("canvas");

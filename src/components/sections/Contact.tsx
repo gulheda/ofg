@@ -71,10 +71,10 @@ export default function Contact() {
   );
 }
 
-/** The site's last word — two traces closing inward, mirroring the opening sequence at first load. */
+/** The site's last word — two traces closing inward on a status dot, mirroring the opening sequence at first load. */
 function ClosingSeal() {
   return (
-    <div className="mt-24 flex items-center gap-4" aria-hidden="true">
+    <div className="relative mt-24 flex items-center gap-4" aria-hidden="true">
       <motion.span
         className="h-px flex-1 origin-right bg-gradient-to-r from-transparent to-accent"
         initial={{ scaleX: 0 }}
@@ -82,7 +82,16 @@ function ClosingSeal() {
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
       />
-      <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">EOF</span>
+      <span className="relative flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">
+        <motion.span
+          className="h-1.5 w-1.5 rounded-full bg-accent"
+          initial={{ opacity: 0, scale: 0.6 }}
+          whileInView={{ opacity: 1, scale: [0.6, 1.4, 1] }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        />
+        EOF
+      </span>
       <motion.span
         className="h-px flex-1 origin-left bg-gradient-to-l from-transparent to-accent"
         initial={{ scaleX: 0 }}
