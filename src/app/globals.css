@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    @apply bg-background text-ink antialiased;
+  }
+
+  ::selection {
+    background: rgba(0, 210, 255, 0.28);
+    color: #ffffff;
+  }
+}
+
+@layer components {
+  /* A link that "closes the circuit" on hover instead of just changing color. */
+  .circuit-link {
+    position: relative;
+    display: inline-block;
+  }
+
+  .circuit-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    height: 1px;
+    width: 100%;
+    transform: scaleX(0);
+    transform-origin: left;
+    background: linear-gradient(90deg, #00d2ff, rgba(0, 210, 255, 0));
+    transition: transform 0.35s cubic-bezier(0.21, 0.47, 0.32, 0.98);
+  }
+
+  .circuit-link:hover::after {
+    transform: scaleX(1);
+  }
+
+  /* A thin light line that takes one lap around a button's border on hover. */
+  .beam-border {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .beam-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 0deg, transparent 0%, #6ee7ff 12%, transparent 26%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    animation: beam-spin 2.4s linear infinite;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .beam-border:hover::before {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .beam-border::before {
+      animation: none;
+    }
+  }
+}
+
+@keyframes beam-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer utilities {
+  .signal-line {
+    stroke-dasharray: 10 8;
+    animation: signal-dash 5s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .signal-line {
+      animation: none;
+    }
+  }
+}
+
+@keyframes signal-dash {
+  to {
+    stroke-dashoffset: -180;
+  }
+}
