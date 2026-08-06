@@ -19,20 +19,32 @@ const secondaryLinks = [
 export default function Contact() {
   return (
     <Section id="iletisim" className="bg-surface/35 backdrop-blur-md">
-      <Reveal variant="fade">
-        <p className="mb-4 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
-          <RingPingDot />
-          06 — İletişim
-        </p>
-      </Reveal>
+      <div className="relative">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-1 -top-6 select-none font-sans text-[5rem] font-light leading-none text-transparent [-webkit-text-stroke:1px_rgba(230,230,228,0.06)] sm:text-[7rem] md:-top-10 md:text-[9rem]"
+        >
+          06
+        </span>
 
-      <TextReveal
-        as="h2"
-        delay={0.05}
-        className="text-2xl font-semibold tracking-tight text-white sm:text-3xl md:text-4xl"
-      >
-        Birlikte neler yapabiliriz?
-      </TextReveal>
+        <Reveal variant="slide-up">
+          <p className="relative mb-4 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+            <RingPingDot />
+            <span aria-hidden="true" className="text-zinc-600">
+              //
+            </span>
+            06 — İletişim
+          </p>
+        </Reveal>
+
+        <TextReveal
+          as="h2"
+          delay={0.05}
+          className="relative font-sans text-3xl font-light tracking-tight text-white sm:text-4xl md:text-5xl"
+        >
+          Birlikte neler yapabiliriz?
+        </TextReveal>
+      </div>
 
       <Reveal variant="fade" delay={0.2}>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-400">

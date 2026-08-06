@@ -5,6 +5,10 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Every rem-based size on the page scales continuously with viewport
+       width instead of jumping at breakpoints — large displays get
+       proportionally bigger type, not a fixed-width island. */
+    font-size: clamp(15px, 0.55vw + 8.5px, 20px);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -80,6 +84,32 @@
       animation: none;
     }
   }
+
+  /* A soft light that follows the cursor inside whatever it's hovering —
+     position comes from --mx/--my, set live by SpotlightDelegate's single
+     delegated pointermove listener. Cards/rows just opt in with data-spot. */
+  [data-spot] {
+    position: relative;
+  }
+
+  [data-spot]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      220px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(0, 210, 255, 0.09),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  [data-spot]:hover::after {
+    opacity: 1;
+  }
 }
 
 @keyframes beam-spin {
@@ -94,10 +124,24 @@
     animation: signal-dash 5s linear infinite;
   }
 
+  .marquee-track {
+    animation: marquee-drift 42s linear infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .signal-line {
       animation: none;
     }
+
+    .marquee-track {
+      animation: none;
+    }
+  }
+}
+
+@keyframes marquee-drift {
+  to {
+    transform: translateX(-50%);
   }
 }
 

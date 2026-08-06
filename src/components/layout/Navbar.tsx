@@ -9,12 +9,33 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [pulseKey, setPulseKey] = useState(0);
+  const [activeHref, setActiveHref] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.3 });
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 16);
+
+      // whichever section's midpoint sits closest to the viewport's own
+      // midpoint is "active" — reads correctly regardless of how tall each
+      // section is, unlike a simple top-edge threshold
+      const center = window.innerHeight / 2;
+      let closest: string | null = null;
+      let closestDist = Infinity;
+      for (const link of navLinks) {
+        const el = document.getElementById(link.href.slice(1));
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const dist = Math.abs(rect.top + rect.height / 2 - center);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closest = link.href;
+        }
+      }
+      setActiveHref(closest);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -71,16 +92,32 @@ export default function Navbar() {
         </a>
 
         <ul className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                className="circuit-link text-sm text-zinc-400 transition-colors duration-200 hover:text-zinc-100"
-              >
-                {link.label}
-              </a>
-            </li>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = activeHref === link.href;
+            return (
+              <li key={link.href} className="relative">
+                <a
+                  href={link.href}
+                  className={`relative pb-1 text-sm transition-colors duration-200 ${
+                    isActive ? "text-zinc-100" : "circuit-link text-zinc-400 hover:text-zinc-100"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-underline"
+                      className="absolute inset-x-0 -bottom-0.5 h-px bg-accent shadow-[0_0_6px_rgba(0,210,255,0.7)]"
+                      transition={
+                        reducedMotion
+                          ? { duration: 0 }
+                          : { type: "spring", stiffness: 380, damping: 34 }
+                      }
+                    />
+                  )}
+                </a>
+              </li>
+            );
+          })}
         </ul>
 
         <button

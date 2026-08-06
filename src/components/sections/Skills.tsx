@@ -27,7 +27,10 @@ export default function Skills() {
               <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
                 {items.map((skill, i) => (
                   <Reveal key={skill.name} variant="scale" delay={groupIndex * 0.06 + i * 0.04}>
-                    <li className="rounded-xl border border-subtle bg-card/80 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-sm">
+                    <li
+                      data-spot
+                      className="overflow-hidden rounded-xl border border-subtle bg-card/80 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-sm"
+                    >
                       <TiltCard className="flex items-center gap-3 rounded-xl p-4" maxTilt={8}>
                         <skill.icon size={18} className="shrink-0 text-accent/80" />
                         <p className="text-sm font-medium text-zinc-200">{skill.name}</p>

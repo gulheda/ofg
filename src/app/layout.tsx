@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Jost, JetBrains_Mono } from "next/font/google";
 import { site } from "@/data/site";
 import TechnicalFrame from "@/components/layout/TechnicalFrame";
 import PcbBackground from "@/components/background/PcbBackground";
 import IntroOverlay from "@/components/layout/IntroOverlay";
+import SpotlightDelegate from "@/components/layout/SpotlightDelegate";
 import "./globals.css";
 
-const inter = Inter({
+const jost = Jost({
   subsets: ["latin", "latin-ext"],
   variable: "--font-sans",
   display: "swap",
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="tr" className={`${jost.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans">
         {/* A refresh should always land back on the hero, not wherever the
             browser's own scroll restoration would put it. */}
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </Script>
         <PcbBackground className="pointer-events-none fixed inset-0 -z-10" />
         <TechnicalFrame />
+        <SpotlightDelegate />
         {children}
         <IntroOverlay />
       </body>

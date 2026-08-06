@@ -5,12 +5,16 @@ import { motion, useScroll, useMotionValueEvent, type Variants } from "framer-mo
 import type { ReactNode } from "react";
 import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
 
-type RevealVariant = "fade" | "slide-up" | "slide-left" | "scale" | "tilt";
+type RevealVariant = "fade" | "slide-up" | "slide-left" | "scale" | "tilt" | "line";
 
 const variantMap: Record<RevealVariant, Variants> = {
   fade: {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
+  },
+  line: {
+    hidden: { scaleX: 0 },
+    visible: { scaleX: 1 },
   },
   "slide-up": {
     hidden: { opacity: 0, y: 24 },

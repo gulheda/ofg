@@ -15,6 +15,37 @@ const BREATHE_PERIOD_MS = 9000;
 const PULSE_COUNT = 22;
 const PULSE_MIN_LEN = 50;
 
+/** Small vocabulary of units/marks drifting through the board like fireflies — the engineer's mark. */
+const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "⏚", "0x3F", "01", "10"];
+const GRAIN_TILE = 96;
+const GRAIN_REFRESH_MS = 110;
+
+interface Mote {
+  x: number;
+  y: number;
+  vy: number;
+  drift: number;
+  phase: number;
+  glyph: string;
+  size: number;
+}
+
+function buildMotes(width: number, height: number, count: number): Mote[] {
+  const motes: Mote[] = [];
+  for (let i = 0; i < count; i++) {
+    motes.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vy: 6 + Math.random() * 10,
+      drift: (Math.random() - 0.5) * 8,
+      phase: Math.random() * Math.PI * 2,
+      glyph: MOTE_GLYPHS[Math.floor(Math.random() * MOTE_GLYPHS.length)],
+      size: 10 + Math.random() * 4,
+    });
+  }
+  return motes;
+}
+
 interface Pulse {
   points: Point[];
   cum: number[];
@@ -128,6 +159,25 @@ export default function PcbBackground({ className }: { className?: string }) {
     const base = document.createElement("canvas");
     const lit = document.createElement("canvas");
     const spot = document.createElement("canvas");
+    const grain = document.createElement("canvas");
+    grain.width = GRAIN_TILE;
+    grain.height = GRAIN_TILE;
+    const grainCtx = grain.getContext("2d")!;
+    let grainPattern: CanvasPattern | null = null;
+    let lastGrainRefresh = 0;
+
+    const refreshGrain = () => {
+      const img = grainCtx.createImageData(GRAIN_TILE, GRAIN_TILE);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const v = Math.random() * 255;
+        img.data[i] = v;
+        img.data[i + 1] = v;
+        img.data[i + 2] = v;
+        img.data[i + 3] = 255;
+      }
+      grainCtx.putImageData(img, 0, 0);
+      grainPattern = ctx.createPattern(grain, "repeat");
+    };
 
     let width = 0;
     let height = 0;
@@ -136,6 +186,7 @@ export default function PcbBackground({ className }: { className?: string }) {
     let running = false;
     let startTime = 0;
     let pulses: Pulse[] = [];
+    let motes: Mote[] = [];
 
     // pointer state lives outside React — no re-renders in the hot path
     const pointer = { x: 0, y: 0, tx: 0, ty: 0, strength: 0, active: false };
@@ -175,6 +226,7 @@ export default function PcbBackground({ className }: { className?: string }) {
       spot.height = glowRadius * 2 * dpr;
 
       pulses = reducedMotion ? [] : buildPulses(layout.traces);
+      motes = reducedMotion ? [] : buildMotes(width, height, isMobile ? 7 : 14);
     };
 
     /** Copy the accent layer through a soft radial mask around the pointer. */
@@ -303,6 +355,50 @@ export default function PcbBackground({ className }: { className?: string }) {
         );
       }
       ctx.globalAlpha = 1;
+
+      // drifting unit/hex glyphs — the board's own small "engineer's mark",
+      // rising slowly and twinkling, wrapping back in at the bottom
+      if (motes.length > 0) {
+        ctx.save();
+        ctx.font = "500 12px ui-monospace, 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#9fe9ff";
+        ctx.shadowColor = "rgba(0,210,255,0.7)";
+        ctx.shadowBlur = 5;
+        for (const m of motes) {
+          m.y -= (m.vy * dt) / 1000;
+          if (m.y < -20) {
+            m.y = height + 20;
+            m.x = Math.random() * width;
+          }
+          const twinkle = 0.25 + 0.35 * (0.5 + 0.5 * Math.sin(elapsed / 1400 + m.phase));
+          const x = m.x + Math.sin(elapsed / 2200 + m.phase) * m.drift;
+          ctx.globalAlpha = twinkle * easedFade;
+          ctx.font = `500 ${m.size}px ui-monospace, 'JetBrains Mono', monospace`;
+          ctx.fillText(m.glyph, x, m.y);
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      }
+
+      // film grain — a faint, live-recomputed noise wash for a printed,
+      // cinematic finish rather than a flat vector fill
+      if (!reducedMotion) {
+        if (!grainPattern || now - lastGrainRefresh > GRAIN_REFRESH_MS) {
+          refreshGrain();
+          lastGrainRefresh = now;
+        }
+        if (grainPattern) {
+          ctx.save();
+          ctx.globalAlpha = 0.035 * easedFade;
+          ctx.globalCompositeOperation = "overlay";
+          ctx.fillStyle = grainPattern;
+          ctx.fillRect(0, 0, width, height);
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
+      }
 
       raf = requestAnimationFrame(frame);
     };

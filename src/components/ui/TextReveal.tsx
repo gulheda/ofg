@@ -11,8 +11,8 @@ const container: Variants = {
 };
 
 const word: Variants = {
-  hidden: { opacity: 0, y: "0.4em", filter: "blur(6px)" },
-  visible: { opacity: 1, y: "0em", filter: "blur(0px)" },
+  hidden: { opacity: 0, y: "0.4em", clipPath: "inset(106% 0% -8% 0%)" },
+  visible: { opacity: 1, y: "0em", clipPath: "inset(-8% 0% -8% 0%)" },
 };
 
 const TAGS = {
@@ -33,9 +33,10 @@ interface TextRevealProps {
 }
 
 /**
- * Text that assembles itself word by word — each one rising out of a blurred
- * mask on its own beat — instead of the whole line sliding up as one flat
- * block. Falls back to plain text when `children` isn't a simple string
+ * Text that assembles itself word by word — each one wiped in from below by
+ * a rising clip-path mask on its own beat, like light climbing the letters —
+ * instead of the whole line sliding up as one flat block. Falls back to
+ * plain text when `children` isn't a simple string
  * (e.g. contains nested elements), since word-splitting only makes sense for
  * a run of plain text.
  *

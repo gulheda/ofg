@@ -63,8 +63,23 @@ export default function Hero() {
               delay: reducedMotion ? 0 : 0.3,
               ease: [0.16, 1, 0.3, 1],
             }}
+            onAnimationComplete={(def) => {
+              // A settled `filter: blur(0px)` is visually identical to no
+              // filter at all, but — combined with `background-clip: text`
+              // on the same element — it forces a composited raster pass
+              // that silently drops small isolated glyph parts (the ö/ü
+              // diaeresis dots specifically) in this build. Once the
+              // entrance blur has actually finished, drop the filter
+              // entirely rather than leaving it parked at zero.
+              if (typeof def === "object" && def !== null && "filter" in def) {
+                (document.getElementById("hero-name") as HTMLElement | null)?.style.removeProperty(
+                  "filter",
+                );
+              }
+            }}
             style={{ textShadow: "0 0 14px rgba(0,210,255,0.22)" }}
-            className="bg-gradient-to-br from-white via-white to-accent-light bg-clip-text font-mono text-4xl font-semibold leading-[1.1] tracking-tight text-transparent sm:text-5xl md:text-6xl lg:text-7xl"
+            id="hero-name"
+            className="bg-gradient-to-br from-white via-white to-accent-light bg-clip-text font-sans text-5xl font-light leading-[1.05] tracking-tight text-transparent sm:text-6xl md:text-7xl lg:text-8xl"
           >
             {site.name}
           </motion.h1>
