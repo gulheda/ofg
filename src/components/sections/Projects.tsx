@@ -26,7 +26,7 @@ export default function Projects() {
           return (
             <Reveal key={project.title} variant="fade" delay={i * 0.05}>
               <article
-                className={`group rounded-lg px-3 -mx-3 transition-all duration-300 hover:scale-[1.01] hover:bg-accent/[0.05] hover:shadow-glow-sm ${
+                className={`group rounded-lg px-3 -mx-3 transition-all duration-300 hover:scale-[1.01] hover:bg-accent/[0.05] hover:shadow-glow-sm active:scale-[0.99] ${
                   isOpen ? "bg-accent/[0.04]" : ""
                 }`}
               >

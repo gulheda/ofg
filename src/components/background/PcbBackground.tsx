@@ -118,8 +118,12 @@ export default function PcbBackground({ className }: { className?: string }) {
       window.matchMedia("(max-width: 768px)").matches ||
       window.matchMedia("(pointer: coarse)").matches;
 
-    const density = isMobile ? 0.9 : 1.4;
-    const glowRadius = isMobile ? 130 : 220;
+    const density = isMobile ? 1.15 : 1.4;
+    const glowRadius = isMobile ? 165 : 220;
+    // no cursor on touch, so the glow can't chase a pointer — instead it
+    // roams to a new random point every few seconds, keeping the board
+    // visibly alive instead of sitting as one flat static print
+    const autoRoam = isMobile && !reducedMotion;
 
     const base = document.createElement("canvas");
     const lit = document.createElement("canvas");
@@ -317,6 +321,20 @@ export default function PcbBackground({ className }: { className?: string }) {
     rebuild();
     start();
 
+    let roamTimer = 0;
+    const pickRoamTarget = () => {
+      const margin = 48;
+      pointer.tx = margin + Math.random() * Math.max(1, width - margin * 2);
+      pointer.ty = margin + Math.random() * Math.max(1, height * 0.7 - margin);
+    };
+    if (autoRoam) {
+      pointer.active = true;
+      pointer.x = width / 2;
+      pointer.y = height * 0.32;
+      pickRoamTarget();
+      roamTimer = window.setInterval(pickRoamTarget, 3000);
+    }
+
     const onPointerMove = (e: PointerEvent) => {
       pointer.active = true;
       pointer.tx = e.clientX;
@@ -328,7 +346,7 @@ export default function PcbBackground({ className }: { className?: string }) {
       }
     };
     const onPointerLeave = () => {
-      pointer.active = false;
+      if (!autoRoam) pointer.active = false;
     };
     const onVisibility = () => {
       if (document.hidden) stop();
@@ -354,6 +372,7 @@ export default function PcbBackground({ className }: { className?: string }) {
     return () => {
       stop();
       window.clearTimeout(resizeTimer);
+      window.clearInterval(roamTimer);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pointermove", onPointerMove);

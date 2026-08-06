@@ -88,7 +88,7 @@ export default function Hero() {
           >
             <a
               href="#projeler"
-              className="beam-border group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-deep px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow"
+              className="beam-border group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-deep px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow active:scale-[0.96]"
             >
               <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
               Projelerimi İncele
@@ -97,7 +97,7 @@ export default function Hero() {
             <a
               href={site.cvUrl}
               download
-              className="beam-border inline-flex items-center gap-2 rounded-lg border border-subtle bg-card/60 px-5 py-2.5 text-sm font-medium text-zinc-200 transition-colors duration-300 hover:border-white/20 hover:bg-card"
+              className="beam-border inline-flex items-center gap-2 rounded-lg border border-subtle bg-card/60 px-5 py-2.5 text-sm font-medium text-zinc-200 transition-all duration-300 hover:border-white/20 hover:bg-card active:scale-[0.96]"
             >
               <FileDown size={16} />
               CV İndir
