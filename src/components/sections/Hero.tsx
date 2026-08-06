@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, FileDown } from "lucide-react";
-import TextReveal from "@/components/ui/TextReveal";
+import TypewriterHeading from "@/components/ui/TypewriterHeading";
 import { site } from "@/data/site";
 
 const ease: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
@@ -56,14 +56,11 @@ export default function Hero() {
             {site.title}
           </motion.p>
 
-          <TextReveal
-            as="h1"
-            trigger="mount"
-            delay={0.18}
+          <TypewriterHeading
+            text={site.name}
+            startDelay={0.18}
             className="font-mono text-3xl font-semibold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl"
-          >
-            {site.name}
-          </TextReveal>
+          />
 
           <motion.p
             {...enter(0.32)}
