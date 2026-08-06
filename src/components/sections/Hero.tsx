@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, FileDown } from "lucide-react";
-import PortalSeal from "@/components/ui/PortalSeal";
 import { site } from "@/data/site";
 
 const ease: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
@@ -47,12 +46,6 @@ export default function Hero() {
         style={{ y: contentY, opacity: contentOpacity }}
         className="relative mx-auto w-full max-w-content px-6 md:px-8"
       >
-        {/* the seal lives in the open right side of the section, clear of the
-            text column, so it can be large and dramatic without ever
-            crossing a line of body copy — desktop only, there's no equivalent
-            open space on a phone screen to give it */}
-        <PortalSeal className="pointer-events-none absolute right-[-120px] top-1/2 hidden h-[440px] w-[440px] -translate-y-1/2 opacity-60 md:block lg:right-[-40px] lg:h-[600px] lg:w-[600px] xl:right-10 xl:h-[680px] xl:w-[680px]" />
-
         <div className="relative max-w-3xl">
           <motion.p
             {...enter(0.1)}
