@@ -1,7 +1,9 @@
 "use client";
 
-import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, useScroll, useMotionValueEvent, type Variants } from "framer-motion";
 import type { ReactNode } from "react";
+import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
 
 const container: Variants = {
   hidden: {},
@@ -37,12 +39,12 @@ interface TextRevealProps {
  * (e.g. contains nested elements), since word-splitting only makes sense for
  * a run of plain text.
  *
- * Always renders the same motion elements regardless of reduced-motion state
- * (only the animate/whileInView props change) — switching between a plain
- * tag and a motion tag based on a value that starts unresolved during SSR
- * previously left the text permanently clipped for users with a system-level
- * "reduce motion" preference, since `initial` is only honoured on mount and
- * a later prop swap doesn't get a second chance to apply it.
+ * Triggered off `useScroll` crossing a threshold (for `trigger="inView"`)
+ * rather than `whileInView` + `viewport.once` — that combination was
+ * confirmed to get stuck permanently hidden in this static-export build
+ * (see Section.tsx for the full diagnosis). `trigger="mount"` renders
+ * already-shown from the first frame (deterministic from the prop, so
+ * server and client always agree — no hydration risk).
  */
 export default function TextReveal({
   children,
@@ -52,29 +54,28 @@ export default function TextReveal({
   trigger = "inView",
   stagger = 0.07,
 }: TextRevealProps) {
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useSafeReducedMotion();
   const MotionTag = TAGS[as];
   const Wrapper = motion.span;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ref = useRef<any>(null);
+  const [shown, setShown] = useState(trigger === "mount");
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.95", "start 0.6"] });
 
-  // `animate` is reactive to prop changes (unlike `initial`), so forcing it to
-  // "visible" here reliably unclips the text even if reducedMotion starts
-  // false during SSR and only resolves to true after mount.
-  const animate = reducedMotion || trigger === "mount" ? "visible" : undefined;
-  const whileInView = !reducedMotion && trigger === "inView" ? "visible" : undefined;
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    if (trigger === "inView" && v > 0.02 && !shown) setShown(true);
+  });
 
-  const sharedProps = {
-    initial: "hidden" as const,
-    animate,
-    whileInView,
-    viewport: whileInView ? { once: true, margin: "-40px" } : undefined,
-  };
+  const animateState = reducedMotion || shown ? "visible" : "hidden";
 
   if (typeof children !== "string") {
     return (
       <MotionTag
+        ref={ref}
         className={className}
         variants={word}
-        {...sharedProps}
+        initial={false}
+        animate={animateState}
         transition={{ duration: reducedMotion ? 0 : 0.7, delay: reducedMotion ? 0 : delay, ease: [0.16, 1, 0.3, 1] }}
       >
         {children}
@@ -86,22 +87,30 @@ export default function TextReveal({
 
   return (
     <MotionTag
+      ref={ref}
       className={className}
       variants={container}
-      {...sharedProps}
+      initial={false}
+      animate={animateState}
       transition={{ delayChildren: reducedMotion ? 0 : delay, staggerChildren: reducedMotion ? 0 : stagger }}
     >
       {words.map((w, i) => (
-        <Wrapper
-          key={i}
-          variants={word}
-          className="inline-block"
-          style={{ willChange: "transform, filter, opacity" }}
-          transition={{ duration: reducedMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {w}
-          {i < words.length - 1 ? " " : ""}
-        </Wrapper>
+        // The space is a plain sibling text node, not part of the animated
+        // span's own content — a trailing space placed *inside* an
+        // inline-block gets silently trimmed by the browser at the box's
+        // edge, which is what was collapsing every reveal into one
+        // run-together word.
+        <span key={i}>
+          <Wrapper
+            variants={word}
+            className="inline-block"
+            style={{ willChange: "transform, filter, opacity" }}
+            transition={{ duration: reducedMotion ? 0 : 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {w}
+          </Wrapper>
+          {i < words.length - 1 ? " " : ""}
+        </span>
       ))}
     </MotionTag>
   );

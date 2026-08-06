@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, type PointerEvent, type ReactNode } from "react";
-import { motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
+import { motion, useMotionValue, useSpring } from "framer-motion";
+import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
 
 interface TiltCardProps {
   children: ReactNode;
@@ -12,7 +13,7 @@ interface TiltCardProps {
 /** Mouse-tracked 3D tilt, the way an inspected PCB catches the light as it turns in your hand. */
 export default function TiltCard({ children, className = "", maxTilt = 7 }: TiltCardProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const reducedMotion = useReducedMotion();
+  const reducedMotion = useSafeReducedMotion();
   const rx = useMotionValue(0);
   const ry = useMotionValue(0);
   const springX = useSpring(rx, { stiffness: 240, damping: 22, mass: 0.6 });

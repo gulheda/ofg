@@ -1,11 +1,13 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowUpRight, FileDown, Linkedin, Phone } from "lucide-react";
 import Section from "@/components/ui/Section";
 import Reveal from "@/components/ui/Reveal";
 import TextReveal from "@/components/ui/TextReveal";
 import RingPingDot from "@/components/ui/RingPingDot";
+import { useSafeReducedMotion } from "@/lib/useSafeReducedMotion";
 import { site } from "@/data/site";
 
 const secondaryLinks = [
@@ -73,33 +75,56 @@ export default function Contact() {
   );
 }
 
-/** The site's last word — two traces closing inward on a status dot, mirroring the opening sequence at first load. */
+/**
+ * The site's last word — a warm gold portal blooming open behind two
+ * traces closing inward on a status dot, mirroring the opening sequence
+ * at first load but in the one color the rest of the site deliberately
+ * never uses. Everywhere else, accent color means "this is interactive" —
+ * here, reaching the end, it means "you've arrived." Scrubbed to scroll
+ * position via `useScroll` rather than `whileInView`, matching Section's
+ * approach: that trigger path is the one already proven not to get stuck
+ * in this static-export build.
+ */
 function ClosingSeal() {
+  const reducedMotion = useSafeReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 0.95", "start 0.55"],
+  });
+
+  const lineScale = useTransform(scrollYProgress, [0, 1], reducedMotion ? [1, 1] : [0, 1]);
+  const dotScale = useTransform(scrollYProgress, [0, 0.7, 1], reducedMotion ? [1, 1, 1] : [0.5, 1.3, 1]);
+  const dotOpacity = useTransform(scrollYProgress, [0, 0.3], reducedMotion ? [1, 1] : [0, 1]);
+  const portalOpacity = useTransform(scrollYProgress, [0, 1], reducedMotion ? [0.5, 0.5] : [0, 0.6]);
+  const portalScale = useTransform(scrollYProgress, [0, 1], reducedMotion ? [1, 1] : [0.35, 1.15]);
+
   return (
-    <div className="relative mt-24 flex items-center gap-4" aria-hidden="true">
+    <div ref={ref} className="relative mt-24 flex items-center gap-4" aria-hidden="true">
+      <motion.div
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+        style={{
+          opacity: portalOpacity,
+          scale: portalScale,
+          background:
+            "radial-gradient(circle, rgba(245,178,66,0.4) 0%, rgba(245,178,66,0.14) 45%, transparent 72%)",
+        }}
+      />
+
       <motion.span
-        className="h-px flex-1 origin-right bg-gradient-to-r from-transparent to-accent"
-        initial={{ scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+        style={{ scaleX: lineScale }}
+        className="h-px flex-1 origin-right bg-gradient-to-r from-transparent to-[#f5b242]"
       />
       <span className="relative flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.3em] text-zinc-600">
         <motion.span
-          className="h-1.5 w-1.5 rounded-full bg-accent"
-          initial={{ opacity: 0, scale: 0.6 }}
-          whileInView={{ opacity: 1, scale: [0.6, 1.4, 1] }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          style={{ opacity: dotOpacity, scale: dotScale }}
+          className="h-1.5 w-1.5 rounded-full bg-[#f5b242] shadow-[0_0_10px_rgba(245,178,66,0.8)]"
         />
         EOF
       </span>
       <motion.span
-        className="h-px flex-1 origin-left bg-gradient-to-l from-transparent to-accent"
-        initial={{ scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+        style={{ scaleX: lineScale }}
+        className="h-px flex-1 origin-left bg-gradient-to-l from-transparent to-[#f5b242]"
       />
     </div>
   );
