@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, FileDown } from "lucide-react";
-import TypewriterHeading from "@/components/ui/TypewriterHeading";
+import PortalSeal from "@/components/ui/PortalSeal";
 import { site } from "@/data/site";
 
 const ease: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
@@ -47,7 +47,13 @@ export default function Hero() {
         style={{ y: contentY, opacity: contentOpacity }}
         className="relative mx-auto w-full max-w-content px-6 md:px-8"
       >
-        <div className="max-w-3xl">
+        {/* the seal lives in the open right side of the section, clear of the
+            text column, so it can be large and dramatic without ever
+            crossing a line of body copy — desktop only, there's no equivalent
+            open space on a phone screen to give it */}
+        <PortalSeal className="pointer-events-none absolute right-[-120px] top-1/2 hidden h-[440px] w-[440px] -translate-y-1/2 opacity-60 md:block lg:right-[-40px] lg:h-[600px] lg:w-[600px] xl:right-10 xl:h-[680px] xl:w-[680px]" />
+
+        <div className="relative max-w-3xl">
           <motion.p
             {...enter(0.1)}
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-subtle bg-card/60 px-4 py-1.5 font-mono text-xs tracking-wider text-zinc-400"
@@ -56,11 +62,19 @@ export default function Hero() {
             {site.title}
           </motion.p>
 
-          <TypewriterHeading
-            text={site.name}
-            startDelay={0.18}
-            className="font-mono text-3xl font-semibold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl"
-          />
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.82, filter: "blur(16px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            transition={{
+              duration: reducedMotion ? 0 : 0.9,
+              delay: reducedMotion ? 0 : 0.3,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            style={{ textShadow: "0 0 34px rgba(0,210,255,0.3)" }}
+            className="bg-gradient-to-br from-white via-white to-accent-light bg-clip-text font-mono text-4xl font-semibold leading-[1.1] tracking-tight text-transparent sm:text-5xl md:text-6xl lg:text-7xl"
+          >
+            {site.name}
+          </motion.h1>
 
           <motion.p
             {...enter(0.32)}

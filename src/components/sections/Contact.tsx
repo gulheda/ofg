@@ -5,6 +5,7 @@ import { ArrowUpRight, FileDown, Linkedin, Phone } from "lucide-react";
 import Section from "@/components/ui/Section";
 import Reveal from "@/components/ui/Reveal";
 import TextReveal from "@/components/ui/TextReveal";
+import RingPingDot from "@/components/ui/RingPingDot";
 import { site } from "@/data/site";
 
 const secondaryLinks = [
@@ -17,7 +18,8 @@ export default function Contact() {
   return (
     <Section id="iletisim" className="bg-surface/35 backdrop-blur-md">
       <Reveal variant="fade">
-        <p className="mb-4 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+        <p className="mb-4 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+          <RingPingDot />
           06 — İletişim
         </p>
       </Reveal>

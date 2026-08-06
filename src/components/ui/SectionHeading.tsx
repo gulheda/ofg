@@ -1,5 +1,6 @@
 import Reveal from "./Reveal";
 import TextReveal from "./TextReveal";
+import RingPingDot from "./RingPingDot";
 
 interface SectionHeadingProps {
   eyebrow: string;
@@ -11,7 +12,8 @@ export default function SectionHeading({ eyebrow, title, description }: SectionH
   return (
     <div className="mb-14 max-w-2xl md:mb-20">
       <Reveal variant="fade">
-        <p className="mb-3 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+        <p className="mb-3 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+          <RingPingDot />
           {eyebrow}
         </p>
       </Reveal>
