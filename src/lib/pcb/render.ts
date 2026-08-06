@@ -78,22 +78,20 @@ function drawGeometry(
 }
 
 /**
- * Ink for the resting board — one consistent sapphire-blue hue (not a hue
- * drift into indigo/violet, which read as a muddy, uncertain colour rather
- * than a considered night-blue palette) with real saturation so it reads as
- * a deep jewel tone against the near-black page instead of flat grey-slate.
+ * Ink for the resting board — near-neutral grey, almost no colour, so the
+ * board reads as etched structure on the anthracite page rather than
+ * competing with it. Colour is reserved for the interactive layer below.
  */
 const restShade = (tint: number, alpha: number) => {
-  const hue = 216 + tint * 8; // 216°–224°: a tight, confident blue
-  const l = 42 + tint * 16; // 42%–58%
-  return `hsla(${hue}, 52%, ${l}%, ${alpha})`;
+  const l = 30 + tint * 12; // 30%–42%
+  return `hsla(210, 8%, ${l}%, ${alpha})`;
 };
 
-/** Brighter and more saturated — the same board, awake, not neon. */
+/** Electric blue / white — the board "waking up" under the pointer. */
 const litShade = (tint: number, alpha: number) => {
-  const hue = 216 + tint * 10;
-  const l = 54 + tint * 18; // 54%–72%
-  return `hsla(${hue}, 78%, ${l}%, ${alpha})`;
+  const hue = 191 + tint * 6; // tight band around #00d2ff
+  const l = 58 + tint * 22; // 58%–80%, brightening toward white at the hot end
+  return `hsla(${hue}, 100%, ${l}%, ${alpha})`;
 };
 
 /**
@@ -141,21 +139,14 @@ export function renderBaseLayer(
   width: number,
   height: number,
 ) {
-  const strokeFor = (tint: number) => restShade(tint, 0.9);
+  const strokeFor = (tint: number) => restShade(tint, 0.85);
 
-  withBloom(ctx, width, height, 0.16, 0.4, (bloomCtx) => {
-    drawGeometry(bloomCtx, layout, (t) => restShade(t, 1), restShade(0.5, 0.8), 2.4);
+  withBloom(ctx, width, height, 0.14, 0.18, (bloomCtx) => {
+    drawGeometry(bloomCtx, layout, (t) => restShade(t, 1), restShade(0.5, 0.7), 2);
   });
 
   ctx.save();
-  ctx.shadowColor = "rgba(110,130,190,0.45)";
-  ctx.shadowBlur = 2.5;
-  ctx.globalAlpha = 0.55;
-  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.6), 0.9);
-  ctx.restore();
-
-  ctx.save();
-  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.95), 0.8);
+  drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.9), 0.7);
   ctx.restore();
 }
 
@@ -176,8 +167,8 @@ export function renderLitLayer(
   });
 
   ctx.save();
-  ctx.shadowColor = "rgba(80,140,235,0.75)";
-  ctx.shadowBlur = 10;
+  ctx.shadowColor = "rgba(0,210,255,0.85)";
+  ctx.shadowBlur = 11;
   drawGeometry(ctx, layout, strokeFor, litShade(0.6, 1), 1.0);
   ctx.restore();
 

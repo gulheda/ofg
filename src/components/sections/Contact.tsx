@@ -25,7 +25,7 @@ export default function Contact() {
       <TextReveal
         as="h2"
         delay={0.05}
-        className="text-2xl font-semibold tracking-tight text-zinc-50 sm:text-3xl md:text-4xl"
+        className="text-2xl font-semibold tracking-tight text-white sm:text-3xl md:text-4xl"
       >
         Birlikte neler yapabiliriz?
       </TextReveal>

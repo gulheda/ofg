@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, FileDown } from "lucide-react";
 import TextReveal from "@/components/ui/TextReveal";
 import { site } from "@/data/site";
@@ -9,6 +10,16 @@ const ease: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
 
 export default function Hero() {
   const reducedMotion = useReducedMotion();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Parallax: as the hero scrolls out, its content rises and fades faster
+  // than the fixed PCB canvas behind it, reading as a depth gap between layers.
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, reducedMotion ? 0 : -80]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.8], [1, reducedMotion ? 1 : 0]);
 
   // Always provide the same initial/animate shape — `initial` only applies on
   // first mount, so conditionally stripping these props to {} once reducedMotion
@@ -21,18 +32,21 @@ export default function Hero() {
   });
 
   return (
-    <section className="relative flex min-h-svh items-center overflow-hidden">
+    <section ref={sectionRef} className="relative flex min-h-svh items-center overflow-hidden">
       {/* scrim darkens behind the text column so the copy stays legible over
           the board, fading out toward the right where the PCB is meant to show */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(100deg, rgba(10,18,36,0.85) 0%, rgba(10,18,36,0.65) 32%, rgba(10,18,36,0.25) 58%, rgba(10,18,36,0) 78%), radial-gradient(ellipse 80% 60% at 50% 50%, rgba(10,18,36,0) 0%, rgba(10,18,36,0.45) 100%)",
+            "linear-gradient(100deg, rgba(18,18,18,0.88) 0%, rgba(18,18,18,0.68) 32%, rgba(18,18,18,0.28) 58%, rgba(18,18,18,0) 78%), radial-gradient(ellipse 80% 60% at 50% 50%, rgba(18,18,18,0) 0%, rgba(18,18,18,0.48) 100%)",
         }}
       />
 
-      <div className="relative mx-auto w-full max-w-content px-6 md:px-8">
+      <motion.div
+        style={{ y: contentY, opacity: contentOpacity }}
+        className="relative mx-auto w-full max-w-content px-6 md:px-8"
+      >
         <div className="max-w-3xl">
           <motion.p
             {...enter(0.1)}
@@ -46,7 +60,7 @@ export default function Hero() {
             as="h1"
             trigger="mount"
             delay={0.18}
-            className="text-3xl font-semibold leading-[1.1] tracking-tight text-zinc-50 sm:text-4xl md:text-5xl"
+            className="font-mono text-3xl font-semibold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl"
           >
             {site.name}
           </TextReveal>
@@ -61,10 +75,23 @@ export default function Hero() {
             tasarlayıp sahada uçuran bir Elektrik-Elektronik Mühendisliği öğrencisi.
           </motion.p>
 
-          <motion.div {...enter(0.44)} className="mt-10 flex flex-wrap items-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: reducedMotion ? 1 : [0.96, 1.03, 1],
+            }}
+            transition={{
+              duration: reducedMotion ? 0 : 0.7,
+              delay: reducedMotion ? 0 : 0.44,
+              ease,
+            }}
+            className="mt-10 flex flex-wrap items-center gap-4"
+          >
             <a
               href="#projeler"
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-deep px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow"
+              className="beam-border group relative inline-flex items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-br from-accent-light via-accent to-accent-deep px-5 py-2.5 text-sm font-medium text-white shadow-glow-sm transition-all duration-300 hover:shadow-glow"
             >
               <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" />
               Projelerimi İncele
@@ -73,7 +100,7 @@ export default function Hero() {
             <a
               href={site.cvUrl}
               download
-              className="inline-flex items-center gap-2 rounded-lg border border-subtle bg-card/60 px-5 py-2.5 text-sm font-medium text-zinc-200 transition-colors duration-300 hover:border-white/20 hover:bg-card"
+              className="beam-border inline-flex items-center gap-2 rounded-lg border border-subtle bg-card/60 px-5 py-2.5 text-sm font-medium text-zinc-200 transition-colors duration-300 hover:border-white/20 hover:bg-card"
             >
               <FileDown size={16} />
               CV İndir
@@ -93,7 +120,7 @@ export default function Hero() {
             <span>2023—2027</span>
           </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* scroll cue */}
       <motion.div

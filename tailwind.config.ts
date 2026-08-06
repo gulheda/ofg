@@ -5,17 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0A1224",
-        surface: "#101C33",
-        card: "#16223E",
+        background: "#121212",
+        surface: "#1A1A1A",
+        card: "#1F1F1F",
+        ink: "#E0E0E0",
         accent: {
-          DEFAULT: "#3B74DC",
-          light: "#7FA8EE",
-          deep: "#1F3B73",
+          DEFAULT: "#00D2FF",
+          light: "#6EE7FF",
+          deep: "#0092B8",
         },
       },
       borderColor: {
-        subtle: "rgba(148,171,214,0.12)",
+        subtle: "rgba(255,255,255,0.08)",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
@@ -25,8 +26,8 @@ const config: Config = {
         content: "72rem",
       },
       boxShadow: {
-        glow: "0 0 40px -10px rgba(59,116,220,0.4)",
-        "glow-sm": "0 0 22px -8px rgba(59,116,220,0.32)",
+        glow: "0 0 40px -10px rgba(0,210,255,0.45)",
+        "glow-sm": "0 0 22px -8px rgba(0,210,255,0.35)",
       },
     },
   },

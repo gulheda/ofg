@@ -18,7 +18,7 @@ export default function SectionHeading({ eyebrow, title, description }: SectionH
       <TextReveal
         as="h2"
         delay={0.08}
-        className="text-xl font-semibold tracking-tight text-zinc-50 md:text-2xl"
+        className="text-xl font-semibold tracking-tight text-white md:text-2xl"
       >
         {title}
       </TextReveal>

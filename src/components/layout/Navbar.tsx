@@ -30,11 +30,20 @@ export default function Navbar() {
     >
       {/* the current running along the top edge — real scroll progress, not decoration */}
       <motion.div
-        className="absolute inset-x-0 top-0 h-[2px] origin-left bg-accent shadow-[0_0_6px_rgba(59,116,220,0.8)]"
+        className="absolute inset-x-0 top-0 h-[2px] origin-left bg-accent shadow-[0_0_6px_rgba(0,210,255,0.8)]"
         style={{ scaleX: progress }}
       />
 
-      <nav className="mx-auto flex h-16 w-full max-w-content items-center justify-between px-6 md:px-8">
+      <motion.nav
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: reducedMotion ? 0 : 0.6,
+          delay: reducedMotion ? 0 : 0.7,
+          ease: [0.21, 0.47, 0.32, 0.98],
+        }}
+        className="mx-auto flex h-16 w-full max-w-content items-center justify-between px-6 md:px-8"
+      >
         <a
           href="#"
           onClick={() => setPulseKey((k) => k + 1)}
@@ -81,7 +90,7 @@ export default function Navbar() {
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
-      </nav>
+      </motion.nav>
 
       {open && (
         <ul className="border-t border-subtle px-6 py-4 md:hidden">
@@ -90,7 +99,7 @@ export default function Navbar() {
               <a
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="block py-2.5 text-sm text-zinc-300 transition-colors hover:text-zinc-50"
+                className="block py-2.5 text-sm text-zinc-300 transition-colors hover:text-white"
               >
                 {link.label}
               </a>

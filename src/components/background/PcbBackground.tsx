@@ -6,8 +6,11 @@ import { renderBaseLayer, renderLitLayer } from "@/lib/pcb/render";
 import type { Point, Trace } from "@/lib/pcb/types";
 
 /** Resting opacity of the copper layer (breathes ±15% around this). */
-const BASE_ALPHA = 0.72;
-const FADE_IN_MS = 1600;
+const BASE_ALPHA = 0.5;
+const FADE_IN_MS = 700;
+/** Scanline sweep + settle-in jitter plays over this window on first mount. */
+const SCAN_MS = 550;
+const GLITCH_MS = 160;
 const BREATHE_PERIOD_MS = 9000;
 const PULSE_COUNT = 22;
 const PULSE_MIN_LEN = 50;
@@ -221,7 +224,10 @@ export default function PcbBackground({ className }: { className?: string }) {
       smoothSpeed += (rawSpeed - smoothSpeed) * 0.12;
       const speedT = Math.min(smoothSpeed / 2.6, 1);
       canvas.style.filter = speedT > 0.02 ? `blur(${(speedT * 2.2).toFixed(2)}px)` : "";
-      canvas.style.transform = `scale(${(1 + speedT * 0.014).toFixed(4)})`;
+      // parallax: the board drifts a little slower than the page scrolls,
+      // clamped so it never scrolls far enough to expose a viewport edge
+      const parallaxY = reducedMotion ? 0 : Math.max(scrollY * -0.03, -22);
+      canvas.style.transform = `translateY(${parallaxY.toFixed(1)}px) scale(${(1 + speedT * 0.014).toFixed(4)})`;
 
       // smooth pointer follow + eased glow strength
       pointer.x += (pointer.tx - pointer.x) * 0.14;
@@ -229,17 +235,46 @@ export default function PcbBackground({ className }: { className?: string }) {
       const targetStrength = pointer.active ? 1 : 0;
       pointer.strength += (targetStrength - pointer.strength) * 0.08;
 
+      // settle-in jitter — a brief, decaying tremor while the board "boots",
+      // like a signal still finding lock, gone well before the fade finishes
+      let jx = 0;
+      let jy = 0;
+      if (!reducedMotion && elapsed < GLITCH_MS) {
+        const jitterT = 1 - elapsed / GLITCH_MS;
+        jx = (Math.random() - 0.5) * 6 * jitterT;
+        jy = (Math.random() - 0.5) * 3 * jitterT;
+      }
+
       ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.translate(jx, jy);
       ctx.globalAlpha = BASE_ALPHA * breathe * easedFade;
       ctx.drawImage(base, 0, 0, width, height);
+      ctx.restore();
       ctx.globalAlpha = 1;
+
+      // scanline sweep — two bright lines racing from centre to the edges
+      // on first mount, like the board is being scanned into existence
+      if (!reducedMotion && elapsed < SCAN_MS) {
+        const scanT = elapsed / SCAN_MS;
+        const scanEase = 1 - Math.pow(1 - scanT, 2);
+        const scanAlpha = (1 - scanT) * 0.8;
+        const midY = height / 2;
+        ctx.save();
+        ctx.fillStyle = `rgba(140,235,255,${scanAlpha.toFixed(3)})`;
+        ctx.shadowColor = "rgba(110,231,255,0.9)";
+        ctx.shadowBlur = 8;
+        ctx.fillRect(0, midY - scanEase * midY - 1, width, 2);
+        ctx.fillRect(0, midY + scanEase * midY - 1, width, 2);
+        ctx.restore();
+      }
 
       // signal pulses — small bright dots travelling the traces on loop, so
       // the board reads as live current flowing rather than a static print.
       if (pulses.length > 0) {
         ctx.save();
-        ctx.fillStyle = "#8fb8f5";
-        ctx.shadowColor = "rgba(59,116,220,0.9)";
+        ctx.fillStyle = "#6ee7ff";
+        ctx.shadowColor = "rgba(0,210,255,0.9)";
         ctx.shadowBlur = 6;
         ctx.globalAlpha = easedFade;
         for (const p of pulses) {

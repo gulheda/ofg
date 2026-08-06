@@ -26,7 +26,7 @@ export default function Projects() {
           return (
             <Reveal key={project.title} variant="fade" delay={i * 0.05}>
               <article
-                className={`group rounded-lg transition-colors duration-500 ${
+                className={`group rounded-lg px-3 -mx-3 transition-all duration-300 hover:scale-[1.01] hover:bg-accent/[0.05] hover:shadow-glow-sm ${
                   isOpen ? "bg-accent/[0.04]" : ""
                 }`}
               >
@@ -50,7 +50,7 @@ export default function Projects() {
                   </span>
 
                   <div>
-                    <h3 className="text-lg font-semibold tracking-tight text-zinc-50 md:text-xl">
+                    <h3 className="text-lg font-semibold tracking-tight text-white md:text-xl">
                       {project.title}
                     </h3>
                     <p className="mt-1.5 font-mono text-xs uppercase tracking-wide text-accent/80">
