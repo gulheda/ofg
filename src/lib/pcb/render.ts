@@ -77,30 +77,79 @@ function drawGeometry(
   }
 }
 
-/** Muted slate-blue ink for the resting board — reads as a blueprint print, not an RGB keyboard. */
+/**
+ * Muted ink for the resting board — hue drifts across the tint spectrum
+ * (steel blue → indigo → soft violet) so the print reads as one considered
+ * palette instead of a single flat slate tone repeated everywhere.
+ */
 const restShade = (tint: number, alpha: number) => {
-  const l = 36 + tint * 16; // 36%–52% lightness, low saturation
-  return `hsla(216, 24%, ${l}%, ${alpha})`;
+  const hue = 212 + tint * 34; // 212°–246°: blue through indigo into violet
+  const l = 38 + tint * 14; // 38%–52% lightness, low saturation
+  return `hsla(${hue}, 30%, ${l}%, ${alpha})`;
 };
 
 /** More saturated, but still restrained — the same board, awake, not neon. */
 const litShade = (tint: number, alpha: number) => {
-  const l = 46 + tint * 18; // 46%–64%
-  return `hsla(217, 58%, ${l}%, ${alpha})`;
+  const hue = 214 + tint * 32;
+  const l = 48 + tint * 16; // 48%–64%
+  return `hsla(${hue}, 62%, ${l}%, ${alpha})`;
 };
 
 /**
- * Resting layer — the board's always-visible identity, printed in quiet
- * slate ink. A faint glow pass keeps it from looking flat, without reading
- * as an energised light show.
+ * A soft bloom pass underneath the crisp geometry, built by rasterising the
+ * board at a fraction of its size and letting the browser's own bitmap
+ * upscaling blur it back out — real optical bloom without `ctx.filter =
+ * "blur()"`, whose software Gaussian pass over a full-viewport canvas is
+ * heavy enough to stall the main thread for hundreds of ms on first paint
+ * (this runs once per resize, not per frame, but that first call lands
+ * right when the hero's entrance animation is also trying to run).
  */
-export function renderBaseLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout) {
-  const strokeFor = (tint: number) => restShade(tint, 0.9);
+function withBloom(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  scale: number,
+  alpha: number,
+  draw: (bloomCtx: CanvasRenderingContext2D) => void,
+) {
+  const sw = Math.max(1, Math.round(width * scale));
+  const sh = Math.max(1, Math.round(height * scale));
+  const small = document.createElement("canvas");
+  small.width = sw;
+  small.height = sh;
+  const bloomCtx = small.getContext("2d");
+  if (!bloomCtx) return;
+  bloomCtx.scale(scale, scale);
+  draw(bloomCtx);
 
   ctx.save();
-  ctx.shadowColor = "rgba(100,120,160,0.5)";
-  ctx.shadowBlur = 3;
-  ctx.globalAlpha = 0.5;
+  ctx.globalAlpha = alpha;
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(small, 0, 0, sw, sh, 0, 0, width, height);
+  ctx.restore();
+}
+
+/**
+ * Resting layer — the board's always-visible identity, printed in quiet
+ * ink with a soft bloom underneath so it has depth even before anything
+ * lights up under touch, without reading as an energised light show.
+ */
+export function renderBaseLayer(
+  ctx: CanvasRenderingContext2D,
+  layout: PcbLayout,
+  width: number,
+  height: number,
+) {
+  const strokeFor = (tint: number) => restShade(tint, 0.9);
+
+  withBloom(ctx, width, height, 0.16, 0.4, (bloomCtx) => {
+    drawGeometry(bloomCtx, layout, (t) => restShade(t, 1), restShade(0.5, 0.8), 2.4);
+  });
+
+  ctx.save();
+  ctx.shadowColor = "rgba(110,130,190,0.45)";
+  ctx.shadowBlur = 2.5;
+  ctx.globalAlpha = 0.55;
   drawGeometry(ctx, layout, strokeFor, restShade(0.5, 0.6), 0.9);
   ctx.restore();
 
@@ -113,16 +162,25 @@ export function renderBaseLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout
  * Accent layer — revealed only through the radial pointer mask, so the
  * board feels like it wakes up under touch instead of shouting constantly.
  */
-export function renderLitLayer(ctx: CanvasRenderingContext2D, layout: PcbLayout) {
+export function renderLitLayer(
+  ctx: CanvasRenderingContext2D,
+  layout: PcbLayout,
+  width: number,
+  height: number,
+) {
   const strokeFor = (tint: number) => litShade(tint, 1);
 
+  withBloom(ctx, width, height, 0.18, 0.6, (bloomCtx) => {
+    drawGeometry(bloomCtx, layout, (t) => litShade(t, 1), litShade(0.6, 1), 2.6);
+  });
+
   ctx.save();
-  ctx.shadowColor = "rgba(59,116,220,0.7)";
+  ctx.shadowColor = "rgba(80,140,235,0.75)";
   ctx.shadowBlur = 10;
   drawGeometry(ctx, layout, strokeFor, litShade(0.6, 1), 1.0);
   ctx.restore();
 
   ctx.save();
-  drawGeometry(ctx, layout, strokeFor, "rgba(203,216,240,1)", 0.85);
+  drawGeometry(ctx, layout, strokeFor, "rgba(210,220,245,1)", 0.85);
   ctx.restore();
 }

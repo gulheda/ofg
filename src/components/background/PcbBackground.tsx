@@ -50,6 +50,26 @@ function buildPulses(traces: Trace[]): Pulse[] {
   return pulses;
 }
 
+/**
+ * Fades the board out toward the far corners so it reads as one composed
+ * scene with a focal centre, instead of an edge-to-edge scatter of traces
+ * at uniform density. Applied once per resize, not per frame.
+ */
+function applyVignette(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  const cx = width * 0.52;
+  const cy = height * 0.4;
+  const radius = Math.max(width, height) * 0.78;
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+  g.addColorStop(0, "rgba(0,0,0,1)");
+  g.addColorStop(0.55, "rgba(0,0,0,0.92)");
+  g.addColorStop(1, "rgba(0,0,0,0.4)");
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+
 /** Position at normalised progress t (0..1) along a polyline, given its cumulative lengths. */
 function pointAtT(points: Point[], cum: number[], total: number, t: number): Point {
   const target = t * total;
@@ -95,7 +115,7 @@ export default function PcbBackground({ className }: { className?: string }) {
       window.matchMedia("(max-width: 768px)").matches ||
       window.matchMedia("(pointer: coarse)").matches;
 
-    const density = isMobile ? 1.05 : 1.8;
+    const density = isMobile ? 0.9 : 1.4;
     const glowRadius = isMobile ? 130 : 220;
 
     const base = document.createElement("canvas");
@@ -136,11 +156,13 @@ export default function PcbBackground({ className }: { className?: string }) {
       }
       const baseCtx = base.getContext("2d")!;
       baseCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      renderBaseLayer(baseCtx, layout);
+      renderBaseLayer(baseCtx, layout, width, height);
+      applyVignette(baseCtx, width, height);
 
       const litCtx = lit.getContext("2d")!;
       litCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      renderLitLayer(litCtx, layout);
+      renderLitLayer(litCtx, layout, width, height);
+      applyVignette(litCtx, width, height);
 
       spot.width = glowRadius * 2 * dpr;
       spot.height = glowRadius * 2 * dpr;
