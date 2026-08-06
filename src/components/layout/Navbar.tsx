@@ -92,21 +92,39 @@ export default function Navbar() {
         </button>
       </motion.nav>
 
-      {open && (
-        <ul className="border-t border-subtle px-6 py-4 md:hidden">
-          {navLinks.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="block py-2.5 text-sm text-zinc-300 transition-colors hover:text-white"
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: reducedMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden border-t border-subtle py-2 md:hidden"
+          >
+            {navLinks.map((link, i) => (
+              <motion.li
+                key={link.href}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  duration: reducedMotion ? 0 : 0.25,
+                  delay: reducedMotion ? 0 : 0.06 + i * 0.04,
+                  ease: [0.21, 0.47, 0.32, 0.98],
+                }}
+                className="px-6"
               >
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
+                <a
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="block py-2.5 text-sm text-zinc-300 transition-colors hover:text-white active:text-accent"
+                >
+                  {link.label}
+                </a>
+              </motion.li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
