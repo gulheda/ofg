@@ -19,68 +19,70 @@ const secondaryLinks = [
 export default function Contact() {
   return (
     <Section id="iletisim" className="bg-surface/10">
-      <div className="relative">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-1 -top-6 select-none font-sans text-[5rem] font-light leading-none text-transparent [-webkit-text-stroke:1px_rgba(230,230,228,0.06)] sm:text-[7rem] md:-top-10 md:text-[9rem]"
-        >
-          06
-        </span>
+      <div className="text-glass -mx-4 px-4 py-6 md:-mx-6 md:px-6 md:py-8">
+        <div className="relative">
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-1 -top-6 select-none font-sans text-[5rem] font-light leading-none text-transparent [-webkit-text-stroke:1px_rgba(230,230,228,0.06)] sm:text-[7rem] md:-top-10 md:text-[9rem]"
+          >
+            06
+          </span>
 
-        <Reveal variant="slide-up">
-          <p className="relative mb-4 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
-            <RingPingDot />
-            <span aria-hidden="true" className="text-zinc-600">
-              //
-            </span>
-            06 — İletişim
+          <Reveal variant="slide-up">
+            <p className="relative mb-4 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+              <RingPingDot />
+              <span aria-hidden="true" className="text-zinc-600">
+                //
+              </span>
+              06 — İletişim
+            </p>
+          </Reveal>
+
+          <TextReveal
+            as="h2"
+            delay={0.05}
+            className="relative font-sans text-3xl font-light tracking-tight text-white sm:text-4xl md:text-5xl"
+          >
+            Birlikte neler yapabiliriz?
+          </TextReveal>
+        </div>
+
+        <Reveal variant="fade" delay={0.2}>
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-400">
+            Bir proje fikriniz mi var, staj ya da yarışma iş birliği mi konuşmak
+            istiyorsunuz? Mesajınızı bekliyorum.
           </p>
         </Reveal>
 
-        <TextReveal
-          as="h2"
-          delay={0.05}
-          className="relative font-sans text-3xl font-light tracking-tight text-white sm:text-4xl md:text-5xl"
-        >
-          Birlikte neler yapabiliriz?
-        </TextReveal>
+        <Reveal variant="slide-up" delay={0.3}>
+          <a
+            href={`mailto:${site.email}`}
+            className="circuit-link group mt-12 inline-flex max-w-full items-center gap-2 break-all text-base font-medium text-zinc-100 transition-colors duration-300 hover:text-accent sm:gap-3 sm:text-lg md:text-xl lg:text-2xl"
+          >
+            {site.email}
+            <ArrowUpRight
+              size={24}
+              className="hidden shrink-0 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 sm:block"
+            />
+          </a>
+        </Reveal>
+
+        <Reveal variant="fade" delay={0.42}>
+          <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-subtle pt-8">
+            {secondaryLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                className="circuit-link inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
+              >
+                <link.icon size={16} />
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </Reveal>
       </div>
-
-      <Reveal variant="fade" delay={0.2}>
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-400">
-          Bir proje fikriniz mi var, staj ya da yarışma iş birliği mi konuşmak
-          istiyorsunuz? Mesajınızı bekliyorum.
-        </p>
-      </Reveal>
-
-      <Reveal variant="slide-up" delay={0.3}>
-        <a
-          href={`mailto:${site.email}`}
-          className="circuit-link group mt-12 inline-flex max-w-full items-center gap-2 break-all text-base font-medium text-zinc-100 transition-colors duration-300 hover:text-accent sm:gap-3 sm:text-lg md:text-xl lg:text-2xl"
-        >
-          {site.email}
-          <ArrowUpRight
-            size={24}
-            className="hidden shrink-0 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1 sm:block"
-          />
-        </a>
-      </Reveal>
-
-      <Reveal variant="fade" delay={0.42}>
-        <div className="mt-14 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-subtle pt-8">
-          {secondaryLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="circuit-link inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-zinc-100"
-            >
-              <link.icon size={16} />
-              {link.label}
-            </a>
-          ))}
-        </div>
-      </Reveal>
 
       <ClosingSeal />
     </Section>

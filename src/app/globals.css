@@ -110,6 +110,17 @@
   [data-spot]:hover::after {
     opacity: 1;
   }
+
+  /* A frosted glass pane sitting behind a block of text — not the whole
+     section, just where reading actually happens — so copy stays legible
+     over the busy 3D circuit without hiding it everywhere else. */
+  .text-glass {
+    position: relative;
+    border-radius: 1rem;
+    background: rgba(6, 11, 24, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
 }
 
 @keyframes beam-spin {

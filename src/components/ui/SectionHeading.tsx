@@ -27,30 +27,32 @@ export default function SectionHeading({ eyebrow, title, description }: SectionH
         {index}
       </span>
 
-      <Reveal variant="slide-up">
-        <p className="relative mb-4 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
-          <RingPingDot />
-          <span aria-hidden="true" className="text-zinc-600">
-            //
-          </span>
-          {eyebrow}
-        </p>
-      </Reveal>
-      <TextReveal
-        as="h2"
-        delay={0.08}
-        className="relative font-sans text-2xl font-light tracking-tight text-white md:text-3xl"
-      >
-        {title}
-      </TextReveal>
-      <Reveal variant="line" delay={0.32} className="relative mt-5 h-px w-10 origin-left bg-accent/40">
-        {null}
-      </Reveal>
-      {description && (
-        <Reveal variant="fade" delay={0.2}>
-          <p className="relative mt-4 text-sm leading-relaxed text-zinc-400">{description}</p>
+      <div className="text-glass -mx-4 px-4 py-3 md:-mx-5 md:px-5">
+        <Reveal variant="slide-up">
+          <p className="relative mb-4 flex items-center gap-2.5 font-mono text-xs uppercase tracking-[0.25em] text-accent">
+            <RingPingDot />
+            <span aria-hidden="true" className="text-zinc-600">
+              //
+            </span>
+            {eyebrow}
+          </p>
         </Reveal>
-      )}
+        <TextReveal
+          as="h2"
+          delay={0.08}
+          className="relative font-sans text-2xl font-light tracking-tight text-white md:text-3xl"
+        >
+          {title}
+        </TextReveal>
+        <Reveal variant="line" delay={0.32} className="relative mt-5 h-px w-10 origin-left bg-accent/40">
+          {null}
+        </Reveal>
+        {description && (
+          <Reveal variant="fade" delay={0.2}>
+            <p className="relative mt-4 text-sm leading-relaxed text-zinc-400">{description}</p>
+          </Reveal>
+        )}
+      </div>
     </div>
   );
 }

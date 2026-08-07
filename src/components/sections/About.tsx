@@ -26,7 +26,7 @@ export default function About() {
     <Section id="hakkimda" className="bg-surface/10">
       <SectionHeading eyebrow="01 — Hakkımda" title="Aviyonikle düşünen, sahada uçuran bir mühendis adayı" />
 
-      <div className="grid gap-10 lg:grid-cols-12">
+      <div className="text-glass grid gap-10 p-6 md:p-8 lg:grid-cols-12">
         <Reveal className="lg:col-span-6">
           <p className="text-base leading-relaxed text-zinc-100 md:text-lg md:leading-[1.5]">
             Balıkesir Üniversitesi <span className="font-mono text-accent">Elektrik-Elektronik Mühendisliği</span> 3.
@@ -58,7 +58,7 @@ export default function About() {
         </Reveal>
       </div>
 
-      <div className="mt-14 grid gap-8 border-t border-subtle pt-10 sm:grid-cols-3">
+      <div className="text-glass mt-8 grid gap-8 p-6 sm:grid-cols-3 md:p-8">
         {focusAreas.map((area, i) => (
           <Reveal key={area.title} variant="fade" delay={i * 0.08}>
             <div className="flex items-start gap-3">

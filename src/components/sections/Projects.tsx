@@ -20,14 +20,14 @@ export default function Projects() {
         title="Seçili çalışmalar"
         description="Yarışma pistinden sahaya: tasarlayıp entegre ettiğim ve bizzat uçurduğum aviyonik sistemler. Detaylar için bir satıra dokun."
       />
-      <div className="mt-4 divide-y divide-subtle border-y border-subtle">
+      <div className="mt-4 space-y-3">
         {projects.map((project, i) => {
           const isOpen = openIndex === i;
           return (
             <Reveal key={project.title} variant="fade" delay={i * 0.05}>
               <article
                 data-spot
-                className={`group overflow-hidden rounded-lg px-3 -mx-3 transition-all duration-300 hover:scale-[1.01] hover:bg-accent/[0.05] hover:shadow-glow-sm active:scale-[0.99] ${
+                className={`text-glass group overflow-hidden px-5 transition-all duration-300 hover:scale-[1.01] hover:bg-accent/[0.05] hover:shadow-glow-sm active:scale-[0.99] ${
                   isOpen ? "bg-accent/[0.04]" : ""
                 }`}
               >

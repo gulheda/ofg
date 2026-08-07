@@ -35,25 +35,28 @@ const BG_COLOR = new THREE.Color(0x0a1330);
 const BG_DEEP_COLOR = new THREE.Color(0x020306);
 
 /**
- * Traces get real per-net variety instead of one flat tone: each trace's
- * `tint` (0..1, from the generator) picks a point between a muted blue and
- * a vivid turquoise, so a layer reads as many individual nets rather than
- * a single wireframe mesh — closer to how a real multi-net board actually
- * looks. Populated features (chip footprints, passives, pads, vias) sit a
- * step brighter than that, so components read as "on top of" the routing
- * the way silkscreen and copper read as distinct layers on a real board.
+ * Traces get real per-net variety instead of one flat tone, but blue stays
+ * the dominant read — only a minority of nets (the high end of the tint
+ * curve) actually reach turquoise, the way an accent color should read as
+ * an accent rather than the default. Populated features (chip footprints,
+ * passives, pads, vias) sit a step brighter than that, so components read
+ * as "on top of" the routing the way silkscreen and copper read as
+ * distinct layers on a real board.
  */
-const TRACE_LOW = new THREE.Color("#2f5872");
-const TRACE_HIGH = new THREE.Color("#42e0cf");
+const TRACE_LOW = new THREE.Color("#2c4f6e");
+const TRACE_HIGH = new THREE.Color("#39c2b3");
 const DEEP_FADE = new THREE.Color("#050b12");
-const FEATURE_COLOR = new THREE.Color("#4a94a3");
+const FEATURE_COLOR = new THREE.Color("#3f7288");
 const FEATURE_DEEP = new THREE.Color("#0b232b");
 const ACCENT = new THREE.Color("#2dd4bf");
 const WHITE = new THREE.Color(1, 1, 1);
 const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
 
 function traceColor(tint: number, depthT: number): THREE.Color {
-  return TRACE_LOW.clone().lerp(TRACE_HIGH, tint).lerp(DEEP_FADE, depthT * 0.6);
+  // bias toward the blue end — most nets stay blue, only the highest-tint
+  // ones actually reach turquoise
+  const biased = Math.pow(tint, 1.8);
+  return TRACE_LOW.clone().lerp(TRACE_HIGH, biased).lerp(DEEP_FADE, depthT * 0.6);
 }
 
 function buildGlowTexture(): THREE.Texture {
@@ -479,8 +482,9 @@ export default function Circuit3D({ className }: { className?: string }) {
       (scene.fog as THREE.Fog).far = THREE.MathUtils.lerp(15, 10, worldT);
 
       // bloom itself flares up while the camera is moving fast — the board
-      // reads as "powering up" under motion instead of a fixed, static glow
-      bloomPass.strength = baseBloomStrength + speedGlow * 0.5;
+      // reads as "powering up" under motion instead of a fixed, static glow.
+      // Kept modest so turquoise stays the accent, not the default state.
+      bloomPass.strength = baseBloomStrength + speedGlow * 0.28;
 
       // each PCB layer energizes as the camera's depth crosses it — brighter
       // and warmer toward turquoise right at the moment of passing through,
@@ -488,20 +492,21 @@ export default function Circuit3D({ className }: { className?: string }) {
       // layer at a time, not sliding past a flat, static backdrop. Eased
       // rather than linear, so the crossing itself feels considered rather
       // than a mechanical ramp. Fast scrolling also lifts every layer at
-      // once — a warp-speed charge running through the whole stack.
+      // once, but gently — this is a highlight on top of a mostly-blue
+      // scene, not a wholesale color shift.
       for (const layer of layerRecords) {
         const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
         const w = raw * raw * (3 - 2 * raw);
-        const surge = w + speedGlow * 0.3;
-        layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.4;
-        layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.6));
+        const surge = w + speedGlow * 0.15;
+        layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.35;
+        layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.4));
         if (layer.featureMat) {
-          layer.featureMat.opacity = layer.baseFeatureOpacity + surge * 0.35;
-          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.55));
+          layer.featureMat.opacity = layer.baseFeatureOpacity + surge * 0.3;
+          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.4));
         }
         if (layer.padMat) {
-          layer.padMat.opacity = layer.basePadOpacity + surge * 0.45;
-          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.55));
+          layer.padMat.opacity = layer.basePadOpacity + surge * 0.4;
+          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.4));
         }
       }
 

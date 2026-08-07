@@ -32,13 +32,16 @@ export default function Hero() {
 
   return (
     <section ref={sectionRef} className="relative flex min-h-svh items-center overflow-hidden">
-      {/* scrim darkens behind the text column so the copy stays legible over
-          the board, fading out toward the right where the PCB is meant to show */}
+      {/* a frosted scrim over the text column, not the whole hero — darkens
+          and blurs the board just behind the copy, fading out (and losing
+          the blur) toward the right where the 3D scene is meant to show */}
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-y-0 left-0 w-full backdrop-blur-md md:w-3/5"
         style={{
           background:
-            "linear-gradient(100deg, rgba(18,18,18,0.88) 0%, rgba(18,18,18,0.68) 32%, rgba(18,18,18,0.28) 58%, rgba(18,18,18,0) 78%), radial-gradient(ellipse 80% 60% at 50% 50%, rgba(18,18,18,0) 0%, rgba(18,18,18,0.48) 100%)",
+            "linear-gradient(100deg, rgba(10,19,48,0.72) 0%, rgba(10,19,48,0.56) 45%, rgba(10,19,48,0.22) 78%, rgba(10,19,48,0) 100%)",
+          maskImage: "linear-gradient(100deg, black 0%, black 55%, transparent 92%)",
+          WebkitMaskImage: "linear-gradient(100deg, black 0%, black 55%, transparent 92%)",
         }}
       />
 
