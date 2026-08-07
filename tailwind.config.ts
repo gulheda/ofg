@@ -5,14 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#121212",
-        surface: "#1A1A1A",
-        card: "#1F1F1F",
-        ink: "#E0E0E0",
+        background: "#0A0F1E",
+        surface: "#111A2E",
+        card: "#16213A",
+        ink: "#E4E7EF",
         accent: {
-          DEFAULT: "#00D2FF",
-          light: "#6EE7FF",
-          deep: "#0092B8",
+          DEFAULT: "#2DD4BF",
+          light: "#5EEAD4",
+          deep: "#0D9488",
+        },
+        gold: {
+          DEFAULT: "#F5B242",
+          light: "#FFD37A",
         },
       },
       borderColor: {
@@ -26,8 +30,8 @@ const config: Config = {
         content: "72rem",
       },
       boxShadow: {
-        glow: "0 0 40px -10px rgba(0,210,255,0.45)",
-        "glow-sm": "0 0 22px -8px rgba(0,210,255,0.35)",
+        glow: "0 0 40px -10px rgba(45,212,191,0.45)",
+        "glow-sm": "0 0 22px -8px rgba(45,212,191,0.35)",
       },
     },
   },

@@ -59,7 +59,7 @@ export default function Section({ id, children, className = "" }: SectionProps) 
             left: sweepX,
             opacity: sweepOpacity,
             background:
-              "linear-gradient(90deg, transparent, rgba(0,210,255,0.14), transparent)",
+              "linear-gradient(90deg, transparent, rgba(45,212,191,0.14), transparent)",
           }}
         />
       )}

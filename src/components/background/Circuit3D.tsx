@@ -29,19 +29,22 @@ const LAYER_COUNT_DESKTOP = 5;
 const LAYER_COUNT_MOBILE = 3;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
-const BG_HEX = 0x121212;
+const BG_HEX = 0x0a0f1e;
 
-const DIM = new THREE.Color("#2c4550");
-const DIM_2 = new THREE.Color("#1c2f38");
-const ACCENT = new THREE.Color("#5fc8dd");
+/** Three-color language, no more: deep night-blue for structure, turquoise for anything "live", gold for arrival. */
+const DIM = new THREE.Color("#23345c");
+const DIM_2 = new THREE.Color("#131d33");
+const ACCENT = new THREE.Color("#2dd4bf");
 /** Landmarks read as foreground objects, not board traces — a step brighter than DIM. */
-const LM_DIM = new THREE.Color("#5a8698");
+const LM_DIM = new THREE.Color("#3f6fa8");
 const GOLD = new THREE.Color("#f5b242");
 const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
 
 /** Depth spacing (world units) between one section's landmark and the next. */
 const SECTION_SPACING = 3.1;
 const SECTION_IDS = ["hakkimda", "yetkinlikler", "projeler", "deneyim", "egitim", "iletisim"] as const;
+/** The orbit landmark's ring plane — shared by its build step and its per-frame satellite animation. */
+const RING_TILT = new THREE.Euler(Math.PI / 2.4, 0, 0);
 
 function buildGlowTexture(): THREE.Texture {
   const size = 128;
@@ -69,9 +72,9 @@ function buildGlyphTexture(glyph: string): THREE.Texture {
   ctx.font = "600 48px ui-monospace, 'JetBrains Mono', monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.shadowColor = "rgba(95,200,221,0.6)";
+  ctx.shadowColor = "rgba(45,212,191,0.6)";
   ctx.shadowBlur = 12;
-  ctx.fillStyle = "#8fd6e8";
+  ctx.fillStyle = "#7ce8d8";
   ctx.fillText(glyph, size / 2, size / 2 + 2);
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
@@ -111,30 +114,46 @@ function dimLine(mat: THREE.LineBasicMaterialParameters) {
   return new THREE.LineBasicMaterial({ transparent: true, fog: true, ...mat });
 }
 
-/** Hakkımda — a faceted satellite core with radiating antenna booms. */
+/** Hakkımda — a parabolic dish antenna: rim, rear support spokes, and a feed horn on a boom. */
 function buildAntenna(glowTex: THREE.Texture): THREE.Group {
   const g = new THREE.Group();
-  const core = new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.34, 0));
-  g.add(new THREE.LineSegments(core, dimLine({ color: LM_DIM, opacity: 0.85 })));
-  const booms = [
-    new THREE.Vector3(1, 0.6, 0.2),
-    new THREE.Vector3(-1, 0.5, -0.3),
-    new THREE.Vector3(0.2, -1, 0.4),
-  ];
+  const hub = new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.09, 0));
+  g.add(new THREE.LineSegments(hub, dimLine({ color: LM_DIM, opacity: 0.85 })));
+
+  const tilt = new THREE.Euler(Math.PI / 2.6, 0, 0);
+  const dish = circleOutline(0.55, 32, LM_DIM, 0.55);
+  dish.rotation.copy(tilt);
+  dish.position.z = -0.05;
+  g.add(dish);
+
+  const rimSegments = 8;
   const tips: number[] = [];
-  for (const dir of booms) {
-    const end = dir.clone().normalize().multiplyScalar(0.82);
-    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), end]);
-    g.add(new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.82 })));
-    tips.push(end.x, end.y, end.z);
+  for (let i = 0; i < rimSegments; i++) {
+    const a = (i / rimSegments) * Math.PI * 2;
+    const rim = new THREE.Vector3(Math.cos(a) * 0.55, Math.sin(a) * 0.55, 0).applyEuler(tilt);
+    rim.z -= 0.05;
+    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), rim]);
+    g.add(new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.4 })));
+    if (i % 2 === 0) tips.push(rim.x, rim.y, rim.z);
   }
+
+  const boomEnd = new THREE.Vector3(0, 0, 0.62);
+  const boomGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), boomEnd]);
+  g.add(new THREE.Line(boomGeo, dimLine({ color: LM_DIM, opacity: 0.8 })));
+  const horn = new THREE.EdgesGeometry(new THREE.ConeGeometry(0.05, 0.14, 8));
+  const hornMesh = new THREE.LineSegments(horn, dimLine({ color: LM_DIM, opacity: 0.85 }));
+  hornMesh.position.copy(boomEnd);
+  hornMesh.rotation.x = Math.PI / 2;
+  g.add(hornMesh);
+  tips.push(boomEnd.x, boomEnd.y, boomEnd.z);
+
   const tipGeo = new THREE.BufferGeometry();
   tipGeo.setAttribute("position", new THREE.Float32BufferAttribute(tips, 3));
   g.add(
     new THREE.Points(
       tipGeo,
       new THREE.PointsMaterial({
-        size: 0.075,
+        size: 0.065,
         map: glowTex,
         color: ACCENT,
         transparent: true,
@@ -148,23 +167,28 @@ function buildAntenna(glowTex: THREE.Texture): THREE.Group {
   return g;
 }
 
-/** Yetkinlikler — an IC package: body outline, pin stubs, one pin-1 dot. */
+/** Yetkinlikler — an IC package: pins on all four sides, one pin-1 marker at a real corner. */
 function buildChip(glowTex: THREE.Texture): THREE.Group {
   const g = new THREE.Group();
-  const body = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.58, 0.09, 0.4));
+  const body = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.5, 0.08, 0.5));
   g.add(new THREE.LineSegments(body, dimLine({ color: LM_DIM, opacity: 0.85 })));
-  const pinXs = [-0.2, -0.07, 0.07, 0.2];
+  const pinCoords = [-0.18, -0.09, 0, 0.09, 0.18];
   for (const side of [1, -1]) {
-    for (const x of pinXs) {
-      const geo = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(x, 0, side * 0.2),
-        new THREE.Vector3(x, 0, side * 0.32),
+    for (const c of pinCoords) {
+      const zGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(c, 0, side * 0.25),
+        new THREE.Vector3(c, 0, side * 0.36),
       ]);
-      g.add(new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.78 })));
+      g.add(new THREE.Line(zGeo, dimLine({ color: LM_DIM, opacity: 0.7 })));
+      const xGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(side * 0.25, 0, c),
+        new THREE.Vector3(side * 0.36, 0, c),
+      ]);
+      g.add(new THREE.Line(xGeo, dimLine({ color: LM_DIM, opacity: 0.7 })));
     }
   }
   const dotGeo = new THREE.BufferGeometry();
-  dotGeo.setAttribute("position", new THREE.Float32BufferAttribute([-0.24, 0.05, -0.16], 3));
+  dotGeo.setAttribute("position", new THREE.Float32BufferAttribute([-0.22, 0.045, -0.22], 3));
   g.add(
     new THREE.Points(
       dotGeo,
@@ -173,7 +197,7 @@ function buildChip(glowTex: THREE.Texture): THREE.Group {
         map: glowTex,
         color: ACCENT,
         transparent: true,
-        opacity: 0.85,
+        opacity: 0.9,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         sizeAttenuation: true,
@@ -183,25 +207,45 @@ function buildChip(glowTex: THREE.Texture): THREE.Group {
   return g;
 }
 
-/** Projeler — a quadcopter: fuselage, four arms, propeller rims. */
-function buildDrone(): THREE.Group {
+/** Projeler — a quadcopter: flattened fuselage, skids, and four rotor hubs with crossed blades that spin. */
+function buildDrone(): { group: THREE.Group; props: THREE.Group[] } {
   const g = new THREE.Group();
-  const body = new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.13, 0));
+  const body = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.3, 0.08, 0.16));
   g.add(new THREE.LineSegments(body, dimLine({ color: LM_DIM, opacity: 0.88 })));
+  for (const side of [1, -1]) {
+    const skidGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.13, -0.08, side * 0.1),
+      new THREE.Vector3(0.13, -0.08, side * 0.1),
+    ]);
+    g.add(new THREE.Line(skidGeo, dimLine({ color: LM_DIM, opacity: 0.5 })));
+  }
   const angles = [45, 135, 225, 315];
+  const props: THREE.Group[] = [];
   for (const deg of angles) {
     const a = (deg * Math.PI) / 180;
-    const end = new THREE.Vector3(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0);
-    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), end]);
-    g.add(new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.82 })));
-    const ring = circleOutline(0.14, 16, ACCENT, 0.6);
-    ring.position.copy(end);
-    g.add(ring);
+    const end = new THREE.Vector3(Math.cos(a) * 0.44, Math.sin(a) * 0.44, 0);
+    const armGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), end]);
+    g.add(new THREE.Line(armGeo, dimLine({ color: LM_DIM, opacity: 0.75 })));
+
+    const hub = new THREE.Group();
+    hub.position.copy(end);
+    hub.add(circleOutline(0.045, 10, LM_DIM, 0.5));
+    const blade1 = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.16, 0, 0), new THREE.Vector3(0.16, 0, 0)]),
+      dimLine({ color: ACCENT, opacity: 0.55 }),
+    );
+    const blade2 = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.16, 0), new THREE.Vector3(0, 0.16, 0)]),
+      dimLine({ color: ACCENT, opacity: 0.55 }),
+    );
+    hub.add(blade1, blade2);
+    g.add(hub);
+    props.push(hub);
   }
-  return g;
+  return { group: g, props };
 }
 
-/** Deneyim — a live signal trace with one bright pulse riding it. */
+/** Deneyim — a signal trace riding an oscilloscope frame, with one bright pulse. */
 function buildSignalWave(glowTex: THREE.Texture) {
   const pts: THREE.Vector3[] = [];
   const n = 48;
@@ -214,6 +258,30 @@ function buildSignalWave(glowTex: THREE.Texture) {
   const line = new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.88 }));
   const group = new THREE.Group();
   group.add(line);
+
+  const baseline = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.9, 0, -0.02), new THREE.Vector3(0.9, 0, -0.02)]),
+    dimLine({ color: LM_DIM, opacity: 0.25 }),
+  );
+  group.add(baseline);
+  for (let i = -4; i <= 4; i++) {
+    const x = i * 0.2;
+    const tick = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(x, -0.04, -0.02),
+        new THREE.Vector3(x, 0.04, -0.02),
+      ]),
+      dimLine({ color: LM_DIM, opacity: 0.2 }),
+    );
+    group.add(tick);
+  }
+  const frame = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.PlaneGeometry(1.9, 0.6)),
+    dimLine({ color: LM_DIM, opacity: 0.18 }),
+  );
+  frame.position.z = -0.03;
+  group.add(frame);
+
   const sprite = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: glowTex,
@@ -228,26 +296,46 @@ function buildSignalWave(glowTex: THREE.Texture) {
   return { group, pts, sprite };
 }
 
-/** Eğitim — an orbit ring with tick marks, like a seal. */
-function buildRing(): THREE.Group {
+/** Eğitim — an orbital diagram: a tilted ring with tick marks, a second inclined ring, and one orbiting satellite. */
+function buildRing(glowTex: THREE.Texture): { group: THREE.Group; orbitDot: THREE.Sprite } {
   const g = new THREE.Group();
-  g.add(circleOutline(0.5, 40, DIM, 0.6));
+  const ring = circleOutline(0.5, 40, DIM, 0.6);
+  ring.rotation.copy(RING_TILT);
+  g.add(ring);
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2;
-    const inner = new THREE.Vector3(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0);
-    const outer = new THREE.Vector3(Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0);
+    const inner = new THREE.Vector3(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0).applyEuler(RING_TILT);
+    const outer = new THREE.Vector3(Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0).applyEuler(RING_TILT);
     const geo = new THREE.BufferGeometry().setFromPoints([inner, outer]);
     g.add(new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.78 })));
   }
-  return g;
+  const ring2 = circleOutline(0.34, 40, LM_DIM, 0.4);
+  ring2.rotation.y = Math.PI / 3;
+  g.add(ring2);
+
+  const orbitDot = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: glowTex,
+      color: ACCENT,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    }),
+  );
+  orbitDot.scale.setScalar(0.09);
+  g.add(orbitDot);
+  return { group: g, orbitDot };
 }
 
-/** İletişim — three concentric gold rings, the same portal motif as the 2D finale. */
+/** İletişim — three gold rings on three different axes, a gimbal rather than a flat bullseye. */
 function buildPortal(): THREE.Group {
   const g = new THREE.Group();
-  g.add(circleOutline(0.4, 48, GOLD, 0.5));
-  g.add(circleOutline(0.62, 48, GOLD, 0.32));
-  g.add(circleOutline(0.85, 48, GOLD, 0.18));
+  const r1 = circleOutline(0.4, 48, GOLD, 0.55);
+  const r2 = circleOutline(0.6, 48, GOLD, 0.35);
+  r2.rotation.y = Math.PI / 2.8;
+  const r3 = circleOutline(0.8, 48, GOLD, 0.2);
+  r3.rotation.x = Math.PI / 2.6;
+  g.add(r1, r2, r3);
   return g;
 }
 
@@ -278,6 +366,10 @@ interface Landmark {
   /** 0..1, how close the camera currently is to "arriving" at this landmark — drives a subtle activation pulse. */
   activation: number;
   wave?: { pts: THREE.Vector3[]; sprite: THREE.Sprite };
+  /** the drone's four rotor hubs — spun independently each frame. */
+  props?: THREE.Group[];
+  /** the orbit landmark's satellite dot, animated along its ring each frame. */
+  orbitDot?: THREE.Sprite;
 }
 
 export default function Circuit3D({ className }: { className?: string }) {
@@ -461,15 +553,27 @@ export default function Circuit3D({ className }: { className?: string }) {
     // count so it can be shared between the camera dolly and every landmark
     const totalDepth = stackDepth + 22;
     const landmarks: Landmark[] = [];
-    const builders: (() => { group: THREE.Group; wave?: Landmark["wave"] })[] = [
+    type BuiltLandmark = {
+      group: THREE.Group;
+      wave?: Landmark["wave"];
+      props?: THREE.Group[];
+      orbitDot?: THREE.Sprite;
+    };
+    const builders: (() => BuiltLandmark)[] = [
       () => ({ group: buildAntenna(glowTex) }),
       () => ({ group: buildChip(glowTex) }),
-      () => ({ group: buildDrone() }),
+      () => {
+        const { group, props } = buildDrone();
+        return { group, props };
+      },
       () => {
         const { group, pts, sprite } = buildSignalWave(glowTex);
         return { group, wave: { pts, sprite } };
       },
-      () => ({ group: buildRing() }),
+      () => {
+        const { group, orbitDot } = buildRing(glowTex);
+        return { group, orbitDot };
+      },
       () => ({ group: buildPortal() }),
     ];
     SECTION_IDS.forEach((_, i) => {
@@ -490,6 +594,8 @@ export default function Circuit3D({ className }: { className?: string }) {
         baseScale,
         activation: 0,
         wave: built.wave,
+        props: built.props,
+        orbitDot: built.orbitDot,
       });
     });
 
@@ -630,6 +736,16 @@ export default function Circuit3D({ className }: { className?: string }) {
           const idx = Math.min(lm.wave.pts.length - 1, Math.floor(t * lm.wave.pts.length));
           const p = lm.wave.pts[idx];
           lm.wave.sprite.position.set(p.x, p.y, p.z);
+        }
+        if (lm.props) {
+          for (const hub of lm.props) hub.rotation.z = elapsed * 0.006;
+        }
+        if (lm.orbitDot) {
+          const orbitT = (elapsed / 3400) % 1;
+          const a = orbitT * Math.PI * 2;
+          lm.orbitDot.position
+            .set(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0)
+            .applyEuler(RING_TILT);
         }
       }
 
