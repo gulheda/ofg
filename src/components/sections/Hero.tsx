@@ -32,16 +32,16 @@ export default function Hero() {
 
   return (
     <section ref={sectionRef} className="relative flex min-h-svh items-center overflow-hidden">
-      {/* a frosted scrim over the text column, not the whole hero — darkens
-          and blurs the board just behind the copy, fading out (and losing
-          the blur) toward the right where the 3D scene is meant to show */}
+      {/* a scrim over the text column, not the whole hero — darkens the
+          board just behind the copy, fading out toward the right where the
+          3D scene is meant to show. A plain gradient, not backdrop-blur:
+          the 3D canvas repaints every frame on its own, so blurring it is a
+          continuous cost, not a one-time one. */}
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-full backdrop-blur-md md:w-3/5"
+        className="pointer-events-none absolute inset-y-0 left-0 w-full md:w-3/5"
         style={{
           background:
-            "linear-gradient(100deg, rgba(5,9,26,0.72) 0%, rgba(5,9,26,0.56) 45%, rgba(5,9,26,0.22) 78%, rgba(5,9,26,0) 100%)",
-          maskImage: "linear-gradient(100deg, black 0%, black 55%, transparent 92%)",
-          WebkitMaskImage: "linear-gradient(100deg, black 0%, black 55%, transparent 92%)",
+            "linear-gradient(100deg, rgba(5,9,26,0.62) 0%, rgba(5,9,26,0.46) 45%, rgba(5,9,26,0.16) 78%, rgba(5,9,26,0) 100%)",
         }}
       />
 
