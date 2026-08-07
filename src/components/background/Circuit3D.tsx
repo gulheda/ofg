@@ -29,10 +29,10 @@ const LAYER_COUNT_MOBILE = 2;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
 
-/** The resting state — unmistakably night-blue, not just dark. */
-const BG_COLOR = new THREE.Color(0x0a1330);
+/** The resting state — dark night-blue, darker than before. */
+const BG_COLOR = new THREE.Color(0x05091a);
 /** Where the world lands by the time you've scrolled to the bottom — nearly black. */
-const BG_DEEP_COLOR = new THREE.Color(0x020306);
+const BG_DEEP_COLOR = new THREE.Color(0x010204);
 
 /**
  * Traces get real per-net variety instead of one flat tone, but blue stays
@@ -41,13 +41,14 @@ const BG_DEEP_COLOR = new THREE.Color(0x020306);
  * an accent rather than the default. Populated features (chip footprints,
  * passives, pads, vias) sit a step brighter than that, so components read
  * as "on top of" the routing the way silkscreen and copper read as
- * distinct layers on a real board.
+ * distinct layers on a real board. Everything runs darker than earlier
+ * passes — this reads as night-blue at rest and in motion, not lit up.
  */
-const TRACE_LOW = new THREE.Color("#2c4f6e");
-const TRACE_HIGH = new THREE.Color("#39c2b3");
-const DEEP_FADE = new THREE.Color("#050b12");
-const FEATURE_COLOR = new THREE.Color("#3f7288");
-const FEATURE_DEEP = new THREE.Color("#0b232b");
+const TRACE_LOW = new THREE.Color("#1a3450");
+const TRACE_HIGH = new THREE.Color("#2b8f88");
+const DEEP_FADE = new THREE.Color("#03060d");
+const FEATURE_COLOR = new THREE.Color("#2a4f63");
+const FEATURE_DEEP = new THREE.Color("#06141c");
 const ACCENT = new THREE.Color("#2dd4bf");
 const WHITE = new THREE.Color(1, 1, 1);
 const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
@@ -178,7 +179,7 @@ export default function Circuit3D({ className }: { className?: string }) {
     const useBloom = !isMobile;
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const baseBloomStrength = 0.5;
+    const baseBloomStrength = 0.32;
     const bloomPass = useBloom ? new UnrealBloomPass(new THREE.Vector2(1, 1), baseBloomStrength, 0.4, 0.26) : null;
     if (bloomPass) composer.addPass(bloomPass);
 
@@ -487,8 +488,8 @@ export default function Circuit3D({ className }: { className?: string }) {
 
       // bloom itself flares up while the camera is moving fast — the board
       // reads as "powering up" under motion instead of a fixed, static glow.
-      // Kept modest so turquoise stays the accent, not the default state.
-      if (bloomPass) bloomPass.strength = baseBloomStrength + speedGlow * 0.28;
+      // Kept subtle — motion should still read as night-blue, not lit up.
+      if (bloomPass) bloomPass.strength = baseBloomStrength + speedGlow * 0.15;
 
       // each PCB layer energizes as the camera's depth crosses it — brighter
       // and warmer toward turquoise right at the moment of passing through,
@@ -496,21 +497,21 @@ export default function Circuit3D({ className }: { className?: string }) {
       // layer at a time, not sliding past a flat, static backdrop. Eased
       // rather than linear, so the crossing itself feels considered rather
       // than a mechanical ramp. Fast scrolling also lifts every layer at
-      // once, but gently — this is a highlight on top of a mostly-blue
+      // once, but gently — this is a faint highlight on top of a dark blue
       // scene, not a wholesale color shift.
       for (const layer of layerRecords) {
         const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
         const w = raw * raw * (3 - 2 * raw);
-        const surge = w + speedGlow * 0.15;
-        layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.35;
-        layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.4));
+        const surge = w + speedGlow * 0.08;
+        layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.28;
+        layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.28));
         if (layer.featureMat) {
-          layer.featureMat.opacity = layer.baseFeatureOpacity + surge * 0.3;
-          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.4));
+          layer.featureMat.opacity = layer.baseFeatureOpacity + surge * 0.24;
+          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.28));
         }
         if (layer.padMat) {
-          layer.padMat.opacity = layer.basePadOpacity + surge * 0.4;
-          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.4));
+          layer.padMat.opacity = layer.basePadOpacity + surge * 0.3;
+          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.28));
         }
       }
 

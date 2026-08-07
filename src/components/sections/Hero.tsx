@@ -39,7 +39,7 @@ export default function Hero() {
         className="pointer-events-none absolute inset-y-0 left-0 w-full backdrop-blur-md md:w-3/5"
         style={{
           background:
-            "linear-gradient(100deg, rgba(10,19,48,0.72) 0%, rgba(10,19,48,0.56) 45%, rgba(10,19,48,0.22) 78%, rgba(10,19,48,0) 100%)",
+            "linear-gradient(100deg, rgba(5,9,26,0.72) 0%, rgba(5,9,26,0.56) 45%, rgba(5,9,26,0.22) 78%, rgba(5,9,26,0) 100%)",
           maskImage: "linear-gradient(100deg, black 0%, black 55%, transparent 92%)",
           WebkitMaskImage: "linear-gradient(100deg, black 0%, black 55%, transparent 92%)",
         }}

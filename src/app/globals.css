@@ -121,7 +121,7 @@
   .text-glass {
     position: relative;
     border-radius: 1rem;
-    background: rgba(6, 11, 24, 0.5);
+    background: rgba(3, 6, 16, 0.58);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
@@ -132,7 +132,7 @@
   .text-panel {
     position: relative;
     border-radius: 1rem;
-    background: rgba(8, 13, 27, 0.72);
+    background: rgba(4, 8, 19, 0.78);
   }
 }
 
