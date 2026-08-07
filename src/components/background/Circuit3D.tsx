@@ -29,8 +29,8 @@ const LAYER_COUNT_MOBILE = 4;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
 
-/** The resting state — one notch darker than before. */
-const BG_COLOR = new THREE.Color(0x080c18);
+/** The resting state — unmistakably night-blue, not just dark. */
+const BG_COLOR = new THREE.Color(0x0a1330);
 /** Where the world lands by the time you've scrolled to the bottom — nearly black. */
 const BG_DEEP_COLOR = new THREE.Color(0x020306);
 
@@ -171,7 +171,8 @@ export default function Circuit3D({ className }: { className?: string }) {
     // bright soft circle sitting flat on top of it
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), isMobile ? 0.42 : 0.6, 0.42, 0.2);
+    const baseBloomStrength = isMobile ? 0.42 : 0.6;
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), baseBloomStrength, 0.42, 0.2);
     composer.addPass(bloomPass);
 
     const rig = new THREE.Group();
@@ -399,7 +400,13 @@ export default function Circuit3D({ className }: { className?: string }) {
     const pointer = { x: 0, y: 0 };
     const pointerSmooth = { x: 0, y: 0 };
     let scrollT = 0;
+    // a real spring, not an exponential decay — the camera eases toward the
+    // target scroll depth with a touch of momentum and settle, the way a
+    // directed camera move settles into a shot instead of just arriving
     let scrollSmooth = 0;
+    let scrollVelocity = 0;
+    const SPRING_STIFFNESS = 0.015;
+    const SPRING_DAMPING = 0.82;
 
     const onPointerMove = (e: PointerEvent) => {
       pointer.x = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -436,7 +443,18 @@ export default function Circuit3D({ className }: { className?: string }) {
 
       pointerSmooth.x += (pointer.x - pointerSmooth.x) * 0.035;
       pointerSmooth.y += (pointer.y - pointerSmooth.y) * 0.035;
-      scrollSmooth += (scrollT - scrollSmooth) * 0.06;
+
+      if (reducedMotion) {
+        scrollSmooth = scrollT;
+        scrollVelocity = 0;
+      } else {
+        scrollVelocity = (scrollVelocity + (scrollT - scrollSmooth) * SPRING_STIFFNESS) * SPRING_DAMPING;
+        scrollSmooth += scrollVelocity;
+      }
+      // how hard the camera is currently moving through the stack — drives
+      // every "energy" reaction below, so scrolling fast reads as punching
+      // through the board at speed rather than a flat, constant glow
+      const speedGlow = Math.min(1, Math.abs(scrollVelocity) * 26);
 
       if (!reducedMotion) {
         rig.rotation.y = Math.sin(liveElapsed / 14000) * 0.05 + pointerSmooth.x * 0.12;
@@ -454,29 +472,36 @@ export default function Circuit3D({ className }: { className?: string }) {
       // from navy toward near-black, and the fog closes in a little, so the
       // bottom of the page reads as somewhere else entirely, not just a
       // scroll position
-      bgScratch.copy(BG_COLOR).lerp(BG_DEEP_COLOR, scrollSmooth);
+      const worldT = THREE.MathUtils.clamp(scrollSmooth, 0, 1);
+      bgScratch.copy(BG_COLOR).lerp(BG_DEEP_COLOR, worldT);
       renderer.setClearColor(bgScratch, 1);
       scene.fog!.color.copy(bgScratch);
-      (scene.fog as THREE.Fog).far = THREE.MathUtils.lerp(15, 10, scrollSmooth);
+      (scene.fog as THREE.Fog).far = THREE.MathUtils.lerp(15, 10, worldT);
+
+      // bloom itself flares up while the camera is moving fast — the board
+      // reads as "powering up" under motion instead of a fixed, static glow
+      bloomPass.strength = baseBloomStrength + speedGlow * 0.5;
 
       // each PCB layer energizes as the camera's depth crosses it — brighter
       // and warmer toward turquoise right at the moment of passing through,
       // so scrolling reads as diving into the board's depths one copper
       // layer at a time, not sliding past a flat, static backdrop. Eased
       // rather than linear, so the crossing itself feels considered rather
-      // than a mechanical ramp.
+      // than a mechanical ramp. Fast scrolling also lifts every layer at
+      // once — a warp-speed charge running through the whole stack.
       for (const layer of layerRecords) {
         const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
         const w = raw * raw * (3 - 2 * raw);
-        layer.lineMat.opacity = layer.baseLineOpacity + w * 0.4;
-        layer.lineMat.color.copy(WHITE).lerp(ACCENT, w * 0.6);
+        const surge = w + speedGlow * 0.3;
+        layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.4;
+        layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.6));
         if (layer.featureMat) {
-          layer.featureMat.opacity = layer.baseFeatureOpacity + w * 0.35;
-          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, w * 0.55);
+          layer.featureMat.opacity = layer.baseFeatureOpacity + surge * 0.35;
+          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.55));
         }
         if (layer.padMat) {
-          layer.padMat.opacity = layer.basePadOpacity + w * 0.45;
-          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, w * 0.55);
+          layer.padMat.opacity = layer.basePadOpacity + surge * 0.45;
+          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.55));
         }
       }
 
@@ -486,6 +511,7 @@ export default function Circuit3D({ className }: { className?: string }) {
         p.sprite.position.set((pos.x - 700) * WORLD_SCALE, (450 - pos.y) * WORLD_SCALE, p.z);
         const mat = p.sprite.material as THREE.SpriteMaterial;
         mat.opacity = 0.55 + 0.45 * Math.sin(t * Math.PI);
+        p.sprite.scale.setScalar(0.08 + speedGlow * 0.1);
       }
 
       for (const m of motes) {
