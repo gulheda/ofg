@@ -34,11 +34,27 @@ const BG_COLOR = new THREE.Color(0x080c18);
 /** Where the world lands by the time you've scrolled to the bottom — nearly black. */
 const BG_DEEP_COLOR = new THREE.Color(0x020306);
 
-/** Three-color language, no more: deep night-blue for structure, turquoise for anything "live". */
-const DIM = new THREE.Color("#1e2f57");
-const DIM_2 = new THREE.Color("#0a0f1e");
+/**
+ * Traces get real per-net variety instead of one flat tone: each trace's
+ * `tint` (0..1, from the generator) picks a point between a muted blue and
+ * a vivid turquoise, so a layer reads as many individual nets rather than
+ * a single wireframe mesh — closer to how a real multi-net board actually
+ * looks. Populated features (chip footprints, passives, pads, vias) sit a
+ * step brighter than that, so components read as "on top of" the routing
+ * the way silkscreen and copper read as distinct layers on a real board.
+ */
+const TRACE_LOW = new THREE.Color("#2f5872");
+const TRACE_HIGH = new THREE.Color("#42e0cf");
+const DEEP_FADE = new THREE.Color("#050b12");
+const FEATURE_COLOR = new THREE.Color("#4a94a3");
+const FEATURE_DEEP = new THREE.Color("#0b232b");
 const ACCENT = new THREE.Color("#2dd4bf");
+const WHITE = new THREE.Color(1, 1, 1);
 const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
+
+function traceColor(tint: number, depthT: number): THREE.Color {
+  return TRACE_LOW.clone().lerp(TRACE_HIGH, tint).lerp(DEEP_FADE, depthT * 0.6);
+}
 
 function buildGlowTexture(): THREE.Texture {
   const size = 128;
@@ -113,9 +129,11 @@ interface Mote {
 /** One PCB layer's materials, tracked so the layer can energize as the camera passes through its depth. */
 interface LayerRecord {
   z: number;
-  baseColor: THREE.Color;
   lineMat: THREE.LineBasicMaterial;
   baseLineOpacity: number;
+  featureColor: THREE.Color;
+  featureMat?: THREE.LineBasicMaterial;
+  baseFeatureOpacity: number;
   padMat?: THREE.PointsMaterial;
   basePadOpacity: number;
 }
@@ -174,6 +192,12 @@ export default function Circuit3D({ className }: { className?: string }) {
     const layerTraces: { points: Point[]; z: number }[] = [];
     const layerRecords: LayerRecord[] = [];
 
+    const toWorld = (x: number, y: number, z: number): [number, number, number] => [
+      (x - 700) * WORLD_SCALE,
+      (450 - y) * WORLD_SCALE,
+      z,
+    ];
+
     for (let li = 0; li < layerCount; li++) {
       const layout: PcbLayout = generatePcb({
         width: 1400,
@@ -184,31 +208,31 @@ export default function Circuit3D({ className }: { className?: string }) {
 
       const z = -li * LAYER_SPACING * WORLD_SCALE;
       const depthT = li / Math.max(1, layerCount - 1);
-      const layerColor = DIM.clone().lerp(DIM_2, depthT);
       // more present than before — the board is the whole scene now, it
       // needs to read clearly rather than fade into a faint backdrop
       const layerOpacity = 0.56 - depthT * 0.32;
+      const featureColor = FEATURE_COLOR.clone().lerp(FEATURE_DEEP, depthT * 0.6);
+      const featureOpacity = 0.66 - depthT * 0.3;
 
+      // nets — each trace keeps its own tint instead of one flat layer
+      // color, so a board reads as many individual routed nets
       const positions: number[] = [];
+      const colors: number[] = [];
       for (const trace of layout.traces) {
         layerTraces.push({ points: trace.points, z });
+        const c = traceColor(trace.tint, depthT);
         for (let i = 1; i < trace.points.length; i++) {
           const a = trace.points[i - 1];
           const b = trace.points[i];
-          positions.push(
-            (a.x - 700) * WORLD_SCALE,
-            (450 - a.y) * WORLD_SCALE,
-            z,
-            (b.x - 700) * WORLD_SCALE,
-            (450 - b.y) * WORLD_SCALE,
-            z,
-          );
+          positions.push(...toWorld(a.x, a.y, z), ...toWorld(b.x, b.y, z));
+          colors.push(c.r, c.g, c.b, c.r, c.g, c.b);
         }
       }
       const lineGeo = new THREE.BufferGeometry();
       lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      lineGeo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
       const lineMat = new THREE.LineBasicMaterial({
-        color: layerColor,
+        vertexColors: true,
         transparent: true,
         opacity: layerOpacity,
         fog: true,
@@ -220,12 +244,69 @@ export default function Circuit3D({ className }: { className?: string }) {
       lines.rotation.y = (li % 2 === 0 ? 1 : -1) * 0.02;
       rig.add(lines);
 
+      // populated features — IC footprints (body + pin stubs) and passive
+      // bodies, the detail that was already in the generator's data but
+      // never actually drawn; this is what makes a layer read as a real
+      // assembled board instead of a bare unpopulated trace print
+      const featurePositions: number[] = [];
+      for (const chip of layout.chips) {
+        const { x, y, w, h } = chip;
+        const corners: [number, number][] = [
+          [x, y],
+          [x + w, y],
+          [x + w, y + h],
+          [x, y + h],
+        ];
+        for (let i = 0; i < 4; i++) {
+          const a = corners[i];
+          const b = corners[(i + 1) % 4];
+          featurePositions.push(...toWorld(a[0], a[1], z), ...toWorld(b[0], b[1], z));
+        }
+        for (const pin of chip.pins) {
+          featurePositions.push(...toWorld(pin.x1, pin.y1, z), ...toWorld(pin.x2, pin.y2, z));
+        }
+      }
+      for (const passive of layout.passives) {
+        const { x, y, angle, length, width: pw } = passive;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const hl = length / 2;
+        const hw = pw / 2;
+        const local: [number, number][] = [
+          [-hl, -hw],
+          [hl, -hw],
+          [hl, hw],
+          [-hl, hw],
+        ];
+        const corners = local.map(([lx, ly]): [number, number] => [x + lx * cos - ly * sin, y + lx * sin + ly * cos]);
+        for (let i = 0; i < 4; i++) {
+          const a = corners[i];
+          const b = corners[(i + 1) % 4];
+          featurePositions.push(...toWorld(a[0], a[1], z), ...toWorld(b[0], b[1], z));
+        }
+      }
+      let featureMat: THREE.LineBasicMaterial | undefined;
+      if (featurePositions.length > 0) {
+        const featureGeo = new THREE.BufferGeometry();
+        featureGeo.setAttribute("position", new THREE.Float32BufferAttribute(featurePositions, 3));
+        featureMat = new THREE.LineBasicMaterial({
+          color: featureColor,
+          transparent: true,
+          opacity: featureOpacity,
+          fog: true,
+        });
+        rig.add(new THREE.LineSegments(featureGeo, featureMat));
+      }
+
       const padPositions: number[] = [];
       for (const pad of layout.pads) {
-        padPositions.push((pad.x - 700) * WORLD_SCALE, (450 - pad.y) * WORLD_SCALE, z);
+        padPositions.push(...toWorld(pad.x, pad.y, z));
       }
       for (const via of layout.vias) {
-        padPositions.push((via.x - 700) * WORLD_SCALE, (450 - via.y) * WORLD_SCALE, z);
+        padPositions.push(...toWorld(via.x, via.y, z));
+      }
+      for (const chip of layout.chips) {
+        padPositions.push(...toWorld(chip.dot.x, chip.dot.y, z));
       }
       let padMat: THREE.PointsMaterial | undefined;
       if (padPositions.length > 0) {
@@ -234,9 +315,9 @@ export default function Circuit3D({ className }: { className?: string }) {
         padMat = new THREE.PointsMaterial({
           size: 0.045,
           map: glowTex,
-          color: layerColor,
+          color: featureColor,
           transparent: true,
-          opacity: layerOpacity,
+          opacity: featureOpacity,
           depthWrite: false,
           blending: THREE.AdditiveBlending,
           sizeAttenuation: true,
@@ -246,11 +327,13 @@ export default function Circuit3D({ className }: { className?: string }) {
 
       layerRecords.push({
         z,
-        baseColor: layerColor,
         lineMat,
         baseLineOpacity: layerOpacity,
+        featureColor,
+        featureMat,
+        baseFeatureOpacity: featureOpacity,
         padMat,
-        basePadOpacity: layerOpacity,
+        basePadOpacity: featureOpacity,
       });
     }
 
@@ -379,14 +462,21 @@ export default function Circuit3D({ className }: { className?: string }) {
       // each PCB layer energizes as the camera's depth crosses it — brighter
       // and warmer toward turquoise right at the moment of passing through,
       // so scrolling reads as diving into the board's depths one copper
-      // layer at a time, not sliding past a flat, static backdrop
+      // layer at a time, not sliding past a flat, static backdrop. Eased
+      // rather than linear, so the crossing itself feels considered rather
+      // than a mechanical ramp.
       for (const layer of layerRecords) {
-        const w = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
+        const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
+        const w = raw * raw * (3 - 2 * raw);
         layer.lineMat.opacity = layer.baseLineOpacity + w * 0.4;
-        layer.lineMat.color.copy(layer.baseColor).lerp(ACCENT, w * 0.55);
+        layer.lineMat.color.copy(WHITE).lerp(ACCENT, w * 0.6);
+        if (layer.featureMat) {
+          layer.featureMat.opacity = layer.baseFeatureOpacity + w * 0.35;
+          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, w * 0.55);
+        }
         if (layer.padMat) {
           layer.padMat.opacity = layer.basePadOpacity + w * 0.45;
-          layer.padMat.color.copy(layer.baseColor).lerp(ACCENT, w * 0.55);
+          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, w * 0.55);
         }
       }
 
