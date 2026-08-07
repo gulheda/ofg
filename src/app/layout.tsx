@@ -3,7 +3,8 @@ import Script from "next/script";
 import { Jost, JetBrains_Mono } from "next/font/google";
 import { site } from "@/data/site";
 import TechnicalFrame from "@/components/layout/TechnicalFrame";
-import PcbBackground from "@/components/background/PcbBackground";
+import Circuit3D from "@/components/background/Circuit3D";
+import SafeBoundary from "@/components/layout/SafeBoundary";
 import IntroOverlay from "@/components/layout/IntroOverlay";
 import SpotlightDelegate from "@/components/layout/SpotlightDelegate";
 import "./globals.css";
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="scroll-reset" strategy="beforeInteractive">
           {`if ("scrollRestoration" in history) { history.scrollRestoration = "manual"; } window.scrollTo(0, 0);`}
         </Script>
-        <PcbBackground className="pointer-events-none fixed inset-0 -z-10" />
+        <SafeBoundary>
+          <Circuit3D className="pointer-events-none fixed inset-0 -z-10" />
+        </SafeBoundary>
         <TechnicalFrame />
         <SpotlightDelegate />
         {children}
