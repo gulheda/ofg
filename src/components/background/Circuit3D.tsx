@@ -24,8 +24,8 @@ import type { PcbLayout, Point } from "@/lib/pcb/types";
  * having descended somewhere else entirely, not just having scrolled.
  */
 
-const LAYER_COUNT_DESKTOP = 7;
-const LAYER_COUNT_MOBILE = 4;
+const LAYER_COUNT_DESKTOP = 4;
+const LAYER_COUNT_MOBILE = 2;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
 
@@ -154,13 +154,16 @@ export default function Circuit3D({ className }: { className?: string }) {
       window.matchMedia("(max-width: 768px)").matches || window.matchMedia("(pointer: coarse)").matches;
     const layerCount = isMobile ? LAYER_COUNT_MOBILE : LAYER_COUNT_DESKTOP;
 
+    // GPU cost scales directly with pixel count and effect passes — both
+    // are kept deliberately conservative since this renders continuously,
+    // full-bleed, behind the entire page
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: false,
       alpha: false,
       powerPreference: "high-performance",
     });
     renderer.setClearColor(BG_COLOR, 1);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5));
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -169,14 +172,15 @@ export default function Circuit3D({ className }: { className?: string }) {
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 40);
     camera.position.set(0, 0, 6.5);
 
-    // real bloom, not a faked glow sprite — lets pulses and pin/via dots
-    // actually flare into the scene around them instead of just being a
-    // bright soft circle sitting flat on top of it
+    // bloom's multi-pass blur chain is the single most expensive thing in
+    // this scene — skip it on mobile entirely rather than tune it down,
+    // and keep it modest on desktop
+    const useBloom = !isMobile;
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const baseBloomStrength = isMobile ? 0.42 : 0.6;
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), baseBloomStrength, 0.42, 0.2);
-    composer.addPass(bloomPass);
+    const baseBloomStrength = 0.5;
+    const bloomPass = useBloom ? new UnrealBloomPass(new THREE.Vector2(1, 1), baseBloomStrength, 0.4, 0.26) : null;
+    if (bloomPass) composer.addPass(bloomPass);
 
     const rig = new THREE.Group();
     scene.add(rig);
@@ -206,7 +210,7 @@ export default function Circuit3D({ className }: { className?: string }) {
       const layout: PcbLayout = generatePcb({
         width: 1400,
         height: 900,
-        density: isMobile ? 0.95 : 1.25,
+        density: isMobile ? 0.55 : 0.85,
         seed: 0x9e7a + li * 733,
       });
 
@@ -343,7 +347,7 @@ export default function Circuit3D({ className }: { className?: string }) {
 
     // signal pulses — a handful of bright sprites racing along real trace
     // paths, so the stack reads as live current rather than a static print
-    const pulseCount = isMobile ? 10 : 20;
+    const pulseCount = isMobile ? 5 : 10;
     const pulseMat = new THREE.SpriteMaterial({
       map: glowTex,
       color: ACCENT,
@@ -369,7 +373,7 @@ export default function Circuit3D({ className }: { className?: string }) {
     // drifting unit glyphs at real, varying depth — parallax the 2D version
     // could only fake, here it's the camera's actual perspective doing it
     const motes: Mote[] = [];
-    const moteCount = isMobile ? 6 : 14;
+    const moteCount = isMobile ? 3 : 7;
     for (let i = 0; i < moteCount; i++) {
       const glyph = MOTE_GLYPHS[Math.floor(Math.random() * MOTE_GLYPHS.length)];
       const mat = new THREE.SpriteMaterial({
@@ -484,7 +488,7 @@ export default function Circuit3D({ className }: { className?: string }) {
       // bloom itself flares up while the camera is moving fast — the board
       // reads as "powering up" under motion instead of a fixed, static glow.
       // Kept modest so turquoise stays the accent, not the default state.
-      bloomPass.strength = baseBloomStrength + speedGlow * 0.28;
+      if (bloomPass) bloomPass.strength = baseBloomStrength + speedGlow * 0.28;
 
       // each PCB layer energizes as the camera's depth crosses it — brighter
       // and warmer toward turquoise right at the moment of passing through,
@@ -570,7 +574,7 @@ export default function Circuit3D({ className }: { className?: string }) {
       document.removeEventListener("visibilitychange", onVisibility);
       container.removeChild(renderer.domElement);
       composer.dispose();
-      bloomPass.dispose();
+      bloomPass?.dispose();
       renderer.dispose();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Points || obj instanceof THREE.Line || obj instanceof THREE.LineSegments) {

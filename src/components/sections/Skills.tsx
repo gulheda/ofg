@@ -29,7 +29,7 @@ export default function Skills() {
                   <Reveal key={skill.name} variant="scale" delay={groupIndex * 0.06 + i * 0.04}>
                     <li
                       data-spot
-                      className="overflow-hidden rounded-xl border border-subtle bg-card/80 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-sm"
+                      className="overflow-hidden rounded-xl border border-subtle bg-card/95 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-glow-sm"
                     >
                       <TiltCard className="flex items-center gap-3 rounded-xl p-4" maxTilt={8}>
                         <skill.icon size={18} className="shrink-0 text-accent/80" />

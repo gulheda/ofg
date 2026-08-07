@@ -10,7 +10,7 @@ export default function Timeline({ items }: { items: TimelineItem[] }) {
         <Reveal key={item.title} variant="fade" delay={i * 0.08}>
           <TiltCard
             maxTilt={3}
-            className="text-glass grid gap-4 px-5 py-8 transition-colors duration-300 hover:bg-accent/[0.03] md:grid-cols-[3rem_8rem_1fr] md:gap-8"
+            className="text-panel grid gap-4 px-5 py-8 transition-colors duration-300 hover:bg-accent/[0.03] md:grid-cols-[3rem_8rem_1fr] md:gap-8"
           >
             <span className="font-mono text-sm text-zinc-600">{String(i + 1).padStart(2, "0")}</span>
             <p className="font-mono text-xs uppercase tracking-wider text-zinc-500">{item.period}</p>

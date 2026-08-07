@@ -113,13 +113,26 @@
 
   /* A frosted glass pane sitting behind a block of text — not the whole
      section, just where reading actually happens — so copy stays legible
-     over the busy 3D circuit without hiding it everywhere else. */
+     over the busy 3D circuit without hiding it everywhere else. Real
+     backdrop-blur, reserved for the one-per-section headings and hero/
+     contact copy where only a single pane is ever on screen at once —
+     blurring a continuously-animating WebGL layer behind it isn't free,
+     and stacking many of these costs real frames. */
   .text-glass {
     position: relative;
     border-radius: 1rem;
     background: rgba(6, 11, 24, 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Same legibility job for repeated list rows (timeline entries, project
+     rows) where several instances are on screen at once — a solid tinted
+     panel instead of a blur, so the cost doesn't multiply per row. */
+  .text-panel {
+    position: relative;
+    border-radius: 1rem;
+    background: rgba(8, 13, 27, 0.72);
   }
 }
 

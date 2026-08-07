@@ -27,7 +27,7 @@ export default function Projects() {
             <Reveal key={project.title} variant="fade" delay={i * 0.05}>
               <article
                 data-spot
-                className={`text-glass group overflow-hidden px-5 transition-all duration-300 hover:scale-[1.01] hover:bg-accent/[0.05] hover:shadow-glow-sm active:scale-[0.99] ${
+                className={`text-panel group overflow-hidden px-5 transition-all duration-300 hover:scale-[1.01] hover:bg-accent/[0.05] hover:shadow-glow-sm active:scale-[0.99] ${
                   isOpen ? "bg-accent/[0.04]" : ""
                 }`}
               >
