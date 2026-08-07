@@ -2,6 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { generatePcb } from "@/lib/pcb/generate";
 import type { PcbLayout, Point } from "@/lib/pcb/types";
 
@@ -271,6 +274,9 @@ interface Landmark {
   x: number;
   y: number;
   z: number;
+  baseScale: number;
+  /** 0..1, how close the camera currently is to "arriving" at this landmark — drives a subtle activation pulse. */
+  activation: number;
   wave?: { pts: THREE.Vector3[]; sprite: THREE.Sprite };
 }
 
@@ -301,6 +307,14 @@ export default function Circuit3D({ className }: { className?: string }) {
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 40);
     camera.position.set(0, 0, 6.5);
+
+    // real bloom, not a faked glow sprite — lets pulses, pin-1 dots and the
+    // portal rings actually flare into the scene around them instead of
+    // just being a bright soft circle sitting flat on top of it
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), isMobile ? 0.4 : 0.55, 0.42, 0.22);
+    composer.addPass(bloomPass);
 
     const rig = new THREE.Group();
     scene.add(rig);
@@ -462,8 +476,9 @@ export default function Circuit3D({ className }: { className?: string }) {
       const built = builders[i]();
       const x = i % 2 === 0 ? 2.3 : -2.3;
       const y = 0.9;
+      const baseScale = i === 5 ? 2.1 : 1.6;
       built.group.position.set(x, y, -stackDepth - (i + 1) * (totalDepth / SECTION_IDS.length));
-      built.group.scale.setScalar(i === 5 ? 2.1 : 1.6);
+      built.group.scale.setScalar(baseScale);
       rig.add(built.group);
       landmarks.push({
         group: built.group,
@@ -472,6 +487,8 @@ export default function Circuit3D({ className }: { className?: string }) {
         x,
         y,
         z: built.group.position.z,
+        baseScale,
+        activation: 0,
         wave: built.wave,
       });
     });
@@ -508,6 +525,7 @@ export default function Circuit3D({ className }: { className?: string }) {
     // pointer + scroll state — outside React, no re-renders in the hot path
     const pointer = { x: 0, y: 0 };
     const pointerSmooth = { x: 0, y: 0 };
+    const lookSmooth = { x: 0, y: 0 };
     let scrollT = 0;
     let scrollSmooth = 0;
 
@@ -527,6 +545,7 @@ export default function Circuit3D({ className }: { className?: string }) {
       width = container.clientWidth;
       height = container.clientHeight;
       renderer.setSize(width, height, false);
+      composer.setSize(width, height);
       camera.aspect = width / Math.max(1, height);
       camera.updateProjectionMatrix();
     };
@@ -556,7 +575,29 @@ export default function Circuit3D({ className }: { className?: string }) {
       camera.position.x = pointerSmooth.x * 0.35;
       camera.position.y = -pointerSmooth.y * 0.25;
       camera.position.z = 6.5 - scrollSmooth * totalDepth;
-      camera.lookAt(0, 0, camera.position.z - 6.5);
+
+      // the camera doesn't just translate through -z, it turns to actually
+      // look at whichever landmark is being arrived at — a real cinematic
+      // pan rather than a fixed-forward dolly, and the same weights double
+      // as each landmark's "activation" pulse below
+      const focusZ = camera.position.z - 5.5;
+      let weightSum = 0;
+      let aimX = 0;
+      let aimY = 0;
+      for (const lm of landmarks) {
+        const w = Math.max(0, 1 - Math.abs(lm.z - focusZ) / 4);
+        lm.activation = w;
+        weightSum += w;
+        aimX += lm.x * w;
+        aimY += lm.y * w;
+      }
+      if (weightSum > 0.001) {
+        aimX /= weightSum;
+        aimY /= weightSum;
+      }
+      lookSmooth.x += (aimX * 0.4 - lookSmooth.x) * 0.025;
+      lookSmooth.y += (aimY * 0.4 - lookSmooth.y) * 0.025;
+      camera.lookAt(lookSmooth.x, lookSmooth.y, camera.position.z - 6.5);
 
       for (const p of pulses) {
         const t = (((elapsed / p.duration) + p.phase) % 1 + 1) % 1;
@@ -575,9 +616,15 @@ export default function Circuit3D({ className }: { className?: string }) {
         mat.opacity = 0.16 + 0.16 * (0.5 + 0.5 * Math.sin(t / 1300 + m.phase));
       }
 
+      const portal = landmarks[landmarks.length - 1];
       for (const lm of landmarks) {
         lm.group.rotation.x = elapsed * lm.spinX;
         lm.group.rotation.y = elapsed * lm.spinY;
+        // the portal keeps its own slow breathing scale; every landmark also
+        // swells slightly as the camera arrives at it, so passing through
+        // reads as "reaching" each object rather than just drifting by one
+        const breathe = lm === portal ? 1 + 0.06 * Math.sin(elapsed / 1800) : 1;
+        lm.group.scale.setScalar(lm.baseScale * breathe * (1 + lm.activation * 0.16));
         if (lm.wave) {
           const t = (elapsed / 2600) % 1;
           const idx = Math.min(lm.wave.pts.length - 1, Math.floor(t * lm.wave.pts.length));
@@ -585,13 +632,8 @@ export default function Circuit3D({ className }: { className?: string }) {
           lm.wave.sprite.position.set(p.x, p.y, p.z);
         }
       }
-      // the last landmark (İletişim's portal) breathes like the closing seal
-      const portal = landmarks[landmarks.length - 1];
-      if (portal) {
-        portal.group.scale.setScalar(2.1 * (1 + 0.06 * Math.sin(elapsed / 1800)));
-      }
 
-      renderer.render(scene, camera);
+      composer.render();
       raf = requestAnimationFrame(frame);
     };
 
@@ -636,6 +678,8 @@ export default function Circuit3D({ className }: { className?: string }) {
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
       container.removeChild(renderer.domElement);
+      composer.dispose();
+      bloomPass.dispose();
       renderer.dispose();
       scene.traverse((obj) => {
         if (obj instanceof THREE.Points || obj instanceof THREE.Line || obj instanceof THREE.LineSegments) {
