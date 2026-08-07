@@ -1,13 +1,17 @@
 import type { TimelineItem } from "@/data/timeline";
 import Reveal from "./Reveal";
+import TiltCard from "./TiltCard";
 
 /** Same numbered-index language as Projects — one consistent way of listing things on this site. */
 export default function Timeline({ items }: { items: TimelineItem[] }) {
   return (
-    <div className="border-y border-subtle">
+    <div className="border-y border-subtle" style={{ perspective: 1200 }}>
       {items.map((item, i) => (
         <Reveal key={item.title} variant="fade" delay={i * 0.08}>
-          <article className="grid gap-4 border-b border-subtle py-8 last:border-b-0 md:grid-cols-[3rem_8rem_1fr] md:gap-8">
+          <TiltCard
+            maxTilt={3}
+            className="grid gap-4 rounded-lg border-b border-subtle px-3 -mx-3 py-8 transition-colors duration-300 last:border-b-0 hover:bg-accent/[0.03] md:grid-cols-[3rem_8rem_1fr] md:gap-8"
+          >
             <span className="font-mono text-sm text-zinc-600">{String(i + 1).padStart(2, "0")}</span>
             <p className="font-mono text-xs uppercase tracking-wider text-zinc-500">{item.period}</p>
             <div>
@@ -17,7 +21,7 @@ export default function Timeline({ items }: { items: TimelineItem[] }) {
                 {item.description}
               </p>
             </div>
-          </article>
+          </TiltCard>
         </Reveal>
       ))}
     </div>

@@ -8,7 +8,7 @@ const CATEGORIES: Skill["category"][] = ["Aviyonik", "PCB & Elektronik", "Yazıl
 
 export default function Skills() {
   return (
-    <Section id="yetkinlikler" className="bg-surface/35 backdrop-blur-md">
+    <Section id="yetkinlikler" className="bg-surface/10">
       <SectionHeading
         eyebrow="02 — Teknik Yetkinlikler"
         title="Araç kutum"

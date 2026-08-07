@@ -14,7 +14,7 @@ export default function Projects() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <Section id="projeler" className="bg-surface/35 backdrop-blur-md">
+    <Section id="projeler" className="bg-surface/10">
       <SectionHeading
         eyebrow="03 — Projeler"
         title="Seçili çalışmalar"

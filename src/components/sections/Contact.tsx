@@ -18,7 +18,7 @@ const secondaryLinks = [
 
 export default function Contact() {
   return (
-    <Section id="iletisim" className="bg-surface/35 backdrop-blur-md">
+    <Section id="iletisim" className="bg-surface/10">
       <div className="relative">
         <span
           aria-hidden="true"

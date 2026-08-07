@@ -23,7 +23,7 @@ const focusAreas = [
 
 export default function About() {
   return (
-    <Section id="hakkimda" className="bg-surface/35 backdrop-blur-md">
+    <Section id="hakkimda" className="bg-surface/10">
       <SectionHeading eyebrow="01 — Hakkımda" title="Aviyonikle düşünen, sahada uçuran bir mühendis adayı" />
 
       <div className="grid gap-10 lg:grid-cols-12">
