@@ -11,18 +11,23 @@ import type { PcbLayout, Point } from "@/lib/pcb/types";
 /**
  * A real WebGL scene, not a flat picture of one: an exploded-view multi-
  * layer PCB stack floating in depth, the way a datasheet's assembly diagram
- * separates copper layers to show how they route past each other. Past the
- * stack, one small wireframe "landmark" object per section drifts at its
- * own depth — an antenna for Hakkımda, an IC for Yetkinlikler, a quadcopter
- * for Projeler, a signal trace for Deneyim, an orbit ring for Eğitim, and
- * three gold portal rings at Contact — so scrolling through the page reads
- * as a single continuous flight past a sequence of real objects, not a
- * static backdrop sitting behind flat panels.
+ * separates copper layers to show how they route past each other. Every
+ * "landmark" — one per section — is built from the same vocabulary as the
+ * board itself, nothing free-floating or out of theme: an MCU package for
+ * Hakkımda, a cluster of passive components for Yetkinlikler, a meander
+ * trace antenna for Projeler, a live signal trace for Deneyim, a
+ * decoupling-capacitor ring for Eğitim, and the gold portal rings at
+ * Contact. Scrolling reads as diving deeper into one continuous circuit,
+ * not passing a sequence of unrelated objects.
  *
- * Everything stays deliberately dim and desaturated — a muted steel-teal,
- * not neon — except the handful of things that are meant to read as "live":
- * signal pulses, propeller rims, pin-1 dots. Restraint reserves brightness
- * for the moments that should actually catch the eye.
+ * As the camera's depth crosses each PCB layer, that layer itself briefly
+ * energizes — brighter, warmer toward turquoise — so passing through reads
+ * as entering that layer's depth, not sliding past a flat backdrop.
+ *
+ * Everything stays deliberately dim and desaturated — deep navy structure,
+ * turquoise for anything "live", gold only for the final arrival — except
+ * the handful of things meant to catch the eye: signal pulses, pin-1 dots,
+ * the layer currently being entered.
  */
 
 const LAYER_COUNT_DESKTOP = 5;
@@ -43,8 +48,6 @@ const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
 /** Depth spacing (world units) between one section's landmark and the next. */
 const SECTION_SPACING = 3.1;
 const SECTION_IDS = ["hakkimda", "yetkinlikler", "projeler", "deneyim", "egitim", "iletisim"] as const;
-/** The orbit landmark's ring plane — shared by its build step and its per-frame satellite animation. */
-const RING_TILT = new THREE.Euler(Math.PI / 2.4, 0, 0);
 
 function buildGlowTexture(): THREE.Texture {
   const size = 128;
@@ -114,60 +117,7 @@ function dimLine(mat: THREE.LineBasicMaterialParameters) {
   return new THREE.LineBasicMaterial({ transparent: true, fog: true, ...mat });
 }
 
-/** Hakkımda — a parabolic dish antenna: rim, rear support spokes, and a feed horn on a boom. */
-function buildAntenna(glowTex: THREE.Texture): THREE.Group {
-  const g = new THREE.Group();
-  const hub = new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(0.09, 0));
-  g.add(new THREE.LineSegments(hub, dimLine({ color: LM_DIM, opacity: 0.85 })));
-
-  const tilt = new THREE.Euler(Math.PI / 2.6, 0, 0);
-  const dish = circleOutline(0.55, 32, LM_DIM, 0.55);
-  dish.rotation.copy(tilt);
-  dish.position.z = -0.05;
-  g.add(dish);
-
-  const rimSegments = 8;
-  const tips: number[] = [];
-  for (let i = 0; i < rimSegments; i++) {
-    const a = (i / rimSegments) * Math.PI * 2;
-    const rim = new THREE.Vector3(Math.cos(a) * 0.55, Math.sin(a) * 0.55, 0).applyEuler(tilt);
-    rim.z -= 0.05;
-    const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), rim]);
-    g.add(new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.4 })));
-    if (i % 2 === 0) tips.push(rim.x, rim.y, rim.z);
-  }
-
-  const boomEnd = new THREE.Vector3(0, 0, 0.62);
-  const boomGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), boomEnd]);
-  g.add(new THREE.Line(boomGeo, dimLine({ color: LM_DIM, opacity: 0.8 })));
-  const horn = new THREE.EdgesGeometry(new THREE.ConeGeometry(0.05, 0.14, 8));
-  const hornMesh = new THREE.LineSegments(horn, dimLine({ color: LM_DIM, opacity: 0.85 }));
-  hornMesh.position.copy(boomEnd);
-  hornMesh.rotation.x = Math.PI / 2;
-  g.add(hornMesh);
-  tips.push(boomEnd.x, boomEnd.y, boomEnd.z);
-
-  const tipGeo = new THREE.BufferGeometry();
-  tipGeo.setAttribute("position", new THREE.Float32BufferAttribute(tips, 3));
-  g.add(
-    new THREE.Points(
-      tipGeo,
-      new THREE.PointsMaterial({
-        size: 0.065,
-        map: glowTex,
-        color: ACCENT,
-        transparent: true,
-        opacity: 0.85,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        sizeAttenuation: true,
-      }),
-    ),
-  );
-  return g;
-}
-
-/** Yetkinlikler — an IC package: pins on all four sides, one pin-1 marker at a real corner. */
+/** Hakkımda — an MCU package: pins on all four sides, one pin-1 marker at a real corner. */
 function buildChip(glowTex: THREE.Texture): THREE.Group {
   const g = new THREE.Group();
   const body = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.5, 0.08, 0.5));
@@ -207,42 +157,135 @@ function buildChip(glowTex: THREE.Texture): THREE.Group {
   return g;
 }
 
-/** Projeler — a quadcopter: flattened fuselage, skids, and four rotor hubs with crossed blades that spin. */
-function buildDrone(): { group: THREE.Group; props: THREE.Group[] } {
+/** Yetkinlikler — a small populated cluster: a resistor, a capacitor and a coiled inductor, the toolbox itself. */
+function buildComponentCluster(glowTex: THREE.Texture): THREE.Group {
   const g = new THREE.Group();
-  const body = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.3, 0.08, 0.16));
-  g.add(new THREE.LineSegments(body, dimLine({ color: LM_DIM, opacity: 0.88 })));
-  for (const side of [1, -1]) {
-    const skidGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-0.13, -0.08, side * 0.1),
-      new THREE.Vector3(0.13, -0.08, side * 0.1),
-    ]);
-    g.add(new THREE.Line(skidGeo, dimLine({ color: LM_DIM, opacity: 0.5 })));
-  }
-  const angles = [45, 135, 225, 315];
-  const props: THREE.Group[] = [];
-  for (const deg of angles) {
-    const a = (deg * Math.PI) / 180;
-    const end = new THREE.Vector3(Math.cos(a) * 0.44, Math.sin(a) * 0.44, 0);
-    const armGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), end]);
-    g.add(new THREE.Line(armGeo, dimLine({ color: LM_DIM, opacity: 0.75 })));
 
-    const hub = new THREE.Group();
-    hub.position.copy(end);
-    hub.add(circleOutline(0.045, 10, LM_DIM, 0.5));
-    const blade1 = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.16, 0, 0), new THREE.Vector3(0.16, 0, 0)]),
-      dimLine({ color: ACCENT, opacity: 0.55 }),
-    );
-    const blade2 = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -0.16, 0), new THREE.Vector3(0, 0.16, 0)]),
-      dimLine({ color: ACCENT, opacity: 0.55 }),
-    );
-    hub.add(blade1, blade2);
-    g.add(hub);
-    props.push(hub);
+  const resistor = new THREE.Group();
+  resistor.add(
+    new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(0.24, 0.08, 0.08)),
+      dimLine({ color: LM_DIM, opacity: 0.85 }),
+    ),
+  );
+  for (const side of [1, -1]) {
+    const lead = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(side * 0.12, 0, 0),
+      new THREE.Vector3(side * 0.22, 0, 0),
+    ]);
+    resistor.add(new THREE.Line(lead, dimLine({ color: LM_DIM, opacity: 0.6 })));
   }
-  return { group: g, props };
+  for (const x of [-0.06, 0, 0.06]) {
+    const band = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(x, -0.045, -0.045),
+      new THREE.Vector3(x, 0.045, 0.045),
+    ]);
+    resistor.add(new THREE.Line(band, dimLine({ color: ACCENT, opacity: 0.4 })));
+  }
+  resistor.position.set(-0.34, 0.13, 0);
+  g.add(resistor);
+
+  const capacitor = new THREE.Group();
+  capacitor.add(
+    new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.CylinderGeometry(0.07, 0.07, 0.16, 12)),
+      dimLine({ color: LM_DIM, opacity: 0.85 }),
+    ),
+  );
+  for (const side of [1, -1]) {
+    const lead = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(side * 0.04, -0.08, 0),
+      new THREE.Vector3(side * 0.04, -0.2, 0),
+    ]);
+    capacitor.add(new THREE.Line(lead, dimLine({ color: LM_DIM, opacity: 0.6 })));
+  }
+  capacitor.position.set(0, -0.03, 0);
+  g.add(capacitor);
+
+  const coilPts: THREE.Vector3[] = [];
+  const turns = 4;
+  for (let i = 0; i <= turns * 12; i++) {
+    const t = i / 12;
+    coilPts.push(
+      new THREE.Vector3(t * 0.06 - 0.12, Math.sin(t * Math.PI * 2) * 0.07, Math.cos(t * Math.PI * 2) * 0.07),
+    );
+  }
+  const inductor = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(coilPts),
+    dimLine({ color: LM_DIM, opacity: 0.8 }),
+  );
+  inductor.position.set(0.34, -0.16, 0);
+  g.add(inductor);
+
+  const dotGeo = new THREE.BufferGeometry();
+  dotGeo.setAttribute("position", new THREE.Float32BufferAttribute([-0.34, 0.18, 0.045], 3));
+  g.add(
+    new THREE.Points(
+      dotGeo,
+      new THREE.PointsMaterial({
+        size: 0.06,
+        map: glowTex,
+        color: ACCENT,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true,
+      }),
+    ),
+  );
+  return g;
+}
+
+/** Projeler — a PCB meander-trace antenna: a flat zigzag copper trace ending in a feed pad, real RF layout language. */
+function buildTraceAntenna(glowTex: THREE.Texture): THREE.Group {
+  const g = new THREE.Group();
+  const legs = 6;
+  const legLen = 0.32;
+  const pts: THREE.Vector3[] = [];
+  let x = -0.45;
+  let dir = 1;
+  pts.push(new THREE.Vector3(x, -0.32, 0));
+  for (let i = 0; i < legs; i++) {
+    const y = -0.32 + ((i + 1) * 0.64) / legs;
+    pts.push(new THREE.Vector3(x, y, 0));
+    x += dir * legLen;
+    pts.push(new THREE.Vector3(x, y, 0));
+    dir *= -1;
+  }
+  g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), dimLine({ color: LM_DIM, opacity: 0.85 })));
+
+  const feedStart = pts[0];
+  const feedEnd = new THREE.Vector3(feedStart.x, feedStart.y - 0.16, 0);
+  g.add(
+    new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([feedStart, feedEnd]),
+      dimLine({ color: LM_DIM, opacity: 0.55 }),
+    ),
+  );
+
+  const tipEnd = pts[pts.length - 1];
+  const tipGeo = new THREE.BufferGeometry();
+  tipGeo.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute([tipEnd.x, tipEnd.y, 0, feedEnd.x, feedEnd.y, feedEnd.z], 3),
+  );
+  g.add(
+    new THREE.Points(
+      tipGeo,
+      new THREE.PointsMaterial({
+        size: 0.06,
+        map: glowTex,
+        color: ACCENT,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true,
+      }),
+    ),
+  );
+  return g;
 }
 
 /** Deneyim — a signal trace riding an oscilloscope frame, with one bright pulse. */
@@ -296,35 +339,48 @@ function buildSignalWave(glowTex: THREE.Texture) {
   return { group, pts, sprite };
 }
 
-/** Eğitim — an orbital diagram: a tilted ring with tick marks, a second inclined ring, and one orbiting satellite. */
-function buildRing(glowTex: THREE.Texture): { group: THREE.Group; orbitDot: THREE.Sprite } {
+/** Eğitim — a decoupling-capacitor ring around a via: real board layout, a power ring feeding a central pin. */
+function buildCapRing(glowTex: THREE.Texture): THREE.Group {
   const g = new THREE.Group();
-  const ring = circleOutline(0.5, 40, DIM, 0.6);
-  ring.rotation.copy(RING_TILT);
-  g.add(ring);
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    const inner = new THREE.Vector3(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0).applyEuler(RING_TILT);
-    const outer = new THREE.Vector3(Math.cos(a) * 0.6, Math.sin(a) * 0.6, 0).applyEuler(RING_TILT);
-    const geo = new THREE.BufferGeometry().setFromPoints([inner, outer]);
-    g.add(new THREE.Line(geo, dimLine({ color: LM_DIM, opacity: 0.78 })));
+  g.add(circleOutline(0.06, 16, LM_DIM, 0.7));
+  const count = 8;
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2;
+    const cx = Math.cos(a) * 0.4;
+    const cy = Math.sin(a) * 0.4;
+    const cap = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(0.07, 0.07, 0.04)),
+      dimLine({ color: LM_DIM, opacity: 0.7 }),
+    );
+    cap.position.set(cx, cy, 0);
+    cap.rotation.z = a;
+    g.add(cap);
+    const trace = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(cx * 0.25, cy * 0.25, 0),
+      new THREE.Vector3(cx * 0.85, cy * 0.85, 0),
+    ]);
+    g.add(new THREE.Line(trace, dimLine({ color: LM_DIM, opacity: 0.35 })));
   }
-  const ring2 = circleOutline(0.34, 40, LM_DIM, 0.4);
-  ring2.rotation.y = Math.PI / 3;
-  g.add(ring2);
+  g.add(circleOutline(0.55, 40, DIM, 0.35));
 
-  const orbitDot = new THREE.Sprite(
-    new THREE.SpriteMaterial({
-      map: glowTex,
-      color: ACCENT,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
+  const dotGeo = new THREE.BufferGeometry();
+  dotGeo.setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0.01], 3));
+  g.add(
+    new THREE.Points(
+      dotGeo,
+      new THREE.PointsMaterial({
+        size: 0.055,
+        map: glowTex,
+        color: ACCENT,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true,
+      }),
+    ),
   );
-  orbitDot.scale.setScalar(0.09);
-  g.add(orbitDot);
-  return { group: g, orbitDot };
+  return g;
 }
 
 /** İletişim — three gold rings on three different axes, a gimbal rather than a flat bullseye. */
@@ -355,6 +411,16 @@ interface Mote {
   phase: number;
 }
 
+/** One PCB layer's materials, tracked so the layer can energize as the camera passes through its depth. */
+interface LayerRecord {
+  z: number;
+  baseColor: THREE.Color;
+  lineMat: THREE.LineBasicMaterial;
+  baseLineOpacity: number;
+  padMat?: THREE.PointsMaterial;
+  basePadOpacity: number;
+}
+
 interface Landmark {
   group: THREE.Group;
   spinX: number;
@@ -366,10 +432,6 @@ interface Landmark {
   /** 0..1, how close the camera currently is to "arriving" at this landmark — drives a subtle activation pulse. */
   activation: number;
   wave?: { pts: THREE.Vector3[]; sprite: THREE.Sprite };
-  /** the drone's four rotor hubs — spun independently each frame. */
-  props?: THREE.Group[];
-  /** the orbit landmark's satellite dot, animated along its ring each frame. */
-  orbitDot?: THREE.Sprite;
 }
 
 export default function Circuit3D({ className }: { className?: string }) {
@@ -424,6 +486,7 @@ export default function Circuit3D({ className }: { className?: string }) {
 
     const pulses: Pulse[] = [];
     const layerTraces: { points: Point[]; z: number }[] = [];
+    const layerRecords: LayerRecord[] = [];
 
     for (let li = 0; li < layerCount; li++) {
       const layout: PcbLayout = generatePcb({
@@ -476,10 +539,11 @@ export default function Circuit3D({ className }: { className?: string }) {
       for (const via of layout.vias) {
         padPositions.push((via.x - 700) * WORLD_SCALE, (450 - via.y) * WORLD_SCALE, z);
       }
+      let padMat: THREE.PointsMaterial | undefined;
       if (padPositions.length > 0) {
         const padGeo = new THREE.BufferGeometry();
         padGeo.setAttribute("position", new THREE.Float32BufferAttribute(padPositions, 3));
-        const padMat = new THREE.PointsMaterial({
+        padMat = new THREE.PointsMaterial({
           size: 0.045,
           map: glowTex,
           color: layerColor,
@@ -491,6 +555,15 @@ export default function Circuit3D({ className }: { className?: string }) {
         });
         rig.add(new THREE.Points(padGeo, padMat));
       }
+
+      layerRecords.push({
+        z,
+        baseColor: layerColor,
+        lineMat,
+        baseLineOpacity: layerOpacity,
+        padMat,
+        basePadOpacity: layerOpacity,
+      });
     }
 
     // signal pulses — a handful of bright sprites racing along real trace
@@ -553,27 +626,16 @@ export default function Circuit3D({ className }: { className?: string }) {
     // count so it can be shared between the camera dolly and every landmark
     const totalDepth = stackDepth + 22;
     const landmarks: Landmark[] = [];
-    type BuiltLandmark = {
-      group: THREE.Group;
-      wave?: Landmark["wave"];
-      props?: THREE.Group[];
-      orbitDot?: THREE.Sprite;
-    };
+    type BuiltLandmark = { group: THREE.Group; wave?: Landmark["wave"] };
     const builders: (() => BuiltLandmark)[] = [
-      () => ({ group: buildAntenna(glowTex) }),
       () => ({ group: buildChip(glowTex) }),
-      () => {
-        const { group, props } = buildDrone();
-        return { group, props };
-      },
+      () => ({ group: buildComponentCluster(glowTex) }),
+      () => ({ group: buildTraceAntenna(glowTex) }),
       () => {
         const { group, pts, sprite } = buildSignalWave(glowTex);
         return { group, wave: { pts, sprite } };
       },
-      () => {
-        const { group, orbitDot } = buildRing(glowTex);
-        return { group, orbitDot };
-      },
+      () => ({ group: buildCapRing(glowTex) }),
       () => ({ group: buildPortal() }),
     ];
     SECTION_IDS.forEach((_, i) => {
@@ -594,8 +656,6 @@ export default function Circuit3D({ className }: { className?: string }) {
         baseScale,
         activation: 0,
         wave: built.wave,
-        props: built.props,
-        orbitDot: built.orbitDot,
       });
     });
 
@@ -682,6 +742,20 @@ export default function Circuit3D({ className }: { className?: string }) {
       camera.position.y = -pointerSmooth.y * 0.25;
       camera.position.z = 6.5 - scrollSmooth * totalDepth;
 
+      // each PCB layer energizes as the camera's depth crosses it — brighter
+      // and warmer toward turquoise right at the moment of passing through,
+      // so scrolling reads as diving into the board's depths one copper
+      // layer at a time, not sliding past a flat, static backdrop
+      for (const layer of layerRecords) {
+        const w = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
+        layer.lineMat.opacity = layer.baseLineOpacity + w * 0.4;
+        layer.lineMat.color.copy(layer.baseColor).lerp(ACCENT, w * 0.55);
+        if (layer.padMat) {
+          layer.padMat.opacity = layer.basePadOpacity + w * 0.45;
+          layer.padMat.color.copy(layer.baseColor).lerp(ACCENT, w * 0.55);
+        }
+      }
+
       // the camera doesn't just translate through -z, it turns to actually
       // look at whichever landmark is being arrived at — a real cinematic
       // pan rather than a fixed-forward dolly, and the same weights double
@@ -736,16 +810,6 @@ export default function Circuit3D({ className }: { className?: string }) {
           const idx = Math.min(lm.wave.pts.length - 1, Math.floor(t * lm.wave.pts.length));
           const p = lm.wave.pts[idx];
           lm.wave.sprite.position.set(p.x, p.y, p.z);
-        }
-        if (lm.props) {
-          for (const hub of lm.props) hub.rotation.z = elapsed * 0.006;
-        }
-        if (lm.orbitDot) {
-          const orbitT = (elapsed / 3400) % 1;
-          const a = orbitT * Math.PI * 2;
-          lm.orbitDot.position
-            .set(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0)
-            .applyEuler(RING_TILT);
         }
       }
 
