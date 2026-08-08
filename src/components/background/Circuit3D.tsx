@@ -28,8 +28,8 @@ import type { PcbLayout, Point } from "@/lib/pcb/types";
  * somewhere else entirely.
  */
 
-const LAYER_COUNT_DESKTOP = 4;
-const LAYER_COUNT_MOBILE = 2;
+const LAYER_COUNT_DESKTOP = 5;
+const LAYER_COUNT_MOBILE = 3;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
 
@@ -215,6 +215,15 @@ export default function Circuit3D({ className }: { className?: string }) {
     });
     renderer.setClearColor(BG_COLOR, 1);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5));
+    // soft shadows are what actually separates a chip from its board —
+    // without them, even a lit box reads as pasted onto a flat surface.
+    // Desktop only; a shadow pass is real extra cost on top of an already
+    // continuously-rendering background.
+    const useShadows = !isMobile;
+    if (useShadows) {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
     container.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -228,9 +237,21 @@ export default function Circuit3D({ className }: { className?: string }) {
     // world space so highlights actually slide across the slabs and chip
     // packages, the single strongest "this is solid" cue a wireframe can't
     // give
-    scene.add(new THREE.AmbientLight(0x1a2f4a, 0.65));
-    const keyLight = new THREE.DirectionalLight(0xdcefff, 1.1);
+    scene.add(new THREE.AmbientLight(0x1a2f4a, 0.55));
+    const keyLight = new THREE.DirectionalLight(0xdcefff, 1.25);
     keyLight.position.set(4, 6, 7);
+    if (useShadows) {
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.set(1024, 1024);
+      keyLight.shadow.bias = -0.0015;
+      const shadowCam = keyLight.shadow.camera;
+      shadowCam.left = -8;
+      shadowCam.right = 8;
+      shadowCam.top = 6;
+      shadowCam.bottom = -6;
+      shadowCam.near = 0.1;
+      shadowCam.far = (layerCount - 1) * LAYER_SPACING * WORLD_SCALE + 12;
+    }
     scene.add(keyLight);
     const fillLight = new THREE.DirectionalLight(0x1f3a5f, 0.4);
     fillLight.position.set(-5, -3, -3);
@@ -299,7 +320,23 @@ export default function Circuit3D({ className }: { className?: string }) {
       const slabGeo = new THREE.BoxGeometry(1400 * WORLD_SCALE, 900 * WORLD_SCALE, BOARD_THICKNESS);
       const slab = new THREE.Mesh(slabGeo, slabMat);
       slab.position.set(0, 0, z);
+      slab.receiveShadow = useShadows;
       rig.add(slab);
+
+      // a faint accent outline tracing the board's edge — the one clean
+      // geometric read that says "this is a fabricated panel with a defined
+      // boundary," not just routing floating in open space
+      const edgeColor = ACCENT.clone().lerp(BG_DEEP_COLOR, depthT * 0.5);
+      const edgeGeo = new THREE.EdgesGeometry(slabGeo);
+      const edgeMat = new THREE.LineBasicMaterial({
+        color: edgeColor,
+        transparent: true,
+        opacity: 0.4 - depthT * 0.2,
+        fog: true,
+      });
+      const edges = new THREE.LineSegments(edgeGeo, edgeMat);
+      edges.position.copy(slab.position);
+      rig.add(edges);
 
       // nets — each trace keeps its own tint instead of one flat layer
       // color, so a board reads as many individual routed nets. Riding
@@ -355,7 +392,10 @@ export default function Circuit3D({ className }: { className?: string }) {
             roughness: 0.4,
             metalness: 0.35,
           });
-          rig.add(new THREE.Mesh(merged, chipMat));
+          const chipMesh = new THREE.Mesh(merged, chipMat);
+          chipMesh.castShadow = useShadows;
+          chipMesh.receiveShadow = useShadows;
+          rig.add(chipMesh);
         }
       }
       if (pinPositions.length > 0) {
@@ -532,10 +572,22 @@ export default function Circuit3D({ className }: { className?: string }) {
         rig.rotation.y = pointerSmooth.x * 0.12;
         rig.rotation.x = pointerSmooth.y * -0.08;
       }
-      camera.position.x = pointerSmooth.x * 0.35;
-      camera.position.y = -pointerSmooth.y * 0.25;
+      // a slow independent drift on top of pointer parallax — two mismatched
+      // sine periods so the path never repeats predictably, like a camera
+      // operator's hand rather than a metronomic loop. Reduced-motion keeps
+      // this at zero so the frozen frame stays truly still.
+      const driftX = reducedMotion ? 0 : Math.sin(liveElapsed / 9000) * 0.18 + Math.sin(liveElapsed / 3700) * 0.05;
+      const driftY = reducedMotion ? 0 : Math.cos(liveElapsed / 11000) * 0.12;
+
+      camera.position.x = pointerSmooth.x * 0.35 + driftX;
+      camera.position.y = -pointerSmooth.y * 0.25 + driftY;
       camera.position.z = 6.5 - scrollSmooth * totalDepth;
       camera.lookAt(0, 0, camera.position.z - 6.5);
+      // a whisper of roll riding the same drift — barely perceptible, but it
+      // breaks the "camera locked to rails" flatness a pure lookAt gives
+      if (!reducedMotion) {
+        camera.rotateZ(Math.sin(liveElapsed / 8000) * 0.012);
+      }
 
       // the world itself darkens as you descend — background and fog drift
       // from navy toward near-black, and the fog closes in a little, so the
