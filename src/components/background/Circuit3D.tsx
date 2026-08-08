@@ -5,22 +5,18 @@ import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { generatePcb } from "@/lib/pcb/generate";
 import type { PcbLayout, Point } from "@/lib/pcb/types";
 
 /**
  * A real WebGL scene, not a flat picture of one: an exploded-view multi-
  * layer PCB stack floating in depth, the way a datasheet's assembly diagram
- * separates copper layers to show how they route past each other. Every
- * layer is a real lit solid — a navy solder-mask slab with actual chip
- * packages standing proud of its surface — not just wireframe lines, so it
- * reads as a rendered board under light rather than a schematic drawing.
- * Routing (traces, pads, pin stubs) stays as thin lines riding just above
- * each slab's surface, the cheap part; the board body and its populated
- * components are real geometry catching a fixed key light as the stack
- * slowly turns, which is what actually sells "solid 3D object" over a flat
- * wireframe ever could.
+ * separates copper layers to show how they route past each other. Just the
+ * circuit itself — a real lit navy solder-mask slab per layer with live
+ * routing on top, nothing populated on it, no extra objects competing for
+ * attention. The board body is real geometry catching a fixed key light as
+ * the stack slowly turns, which is what sells "solid 3D object" over flat
+ * wireframe lines alone; the routing on top of it is what moves.
  *
  * As the camera's depth crosses each layer, that layer's routing energizes
  * — brighter, warmer toward turquoise — so passing through reads as
@@ -37,11 +33,9 @@ const LAYER_COUNT_MOBILE = 2;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
 
-/** How far routing/components stand off the slab's face, and how thick the slab itself is. */
+/** How far routing stands off the slab's face, and how thick the slab itself is. */
 const BOARD_THICKNESS = 0.05;
 const SURFACE_OFFSET = BOARD_THICKNESS / 2 + 0.012;
-const CHIP_RISE = 0.09;
-const PASSIVE_RISE = 0.05;
 
 /** The resting state — dark night-blue, darker than before. */
 const BG_COLOR = new THREE.Color(0x05091a);
@@ -51,10 +45,6 @@ const BG_DEEP_COLOR = new THREE.Color(0x010204);
 /** The board substrate itself — a genuine navy solder-mask blue, not a scene tint. */
 const SLAB_NEAR = new THREE.Color("#16294d");
 const SLAB_FAR = new THREE.Color("#050b18");
-/** IC packages: dark plastic with a faint sheen, not pure black. */
-const CHIP_PLASTIC = new THREE.Color("#0b0e17");
-/** Passive component bodies — a step lighter, still in the same cool family. */
-const PASSIVE_COLOR = new THREE.Color("#3d5670");
 
 /**
  * Traces get real per-net variety instead of one flat tone, but blue stays
@@ -65,8 +55,9 @@ const PASSIVE_COLOR = new THREE.Color("#3d5670");
 const TRACE_LOW = new THREE.Color("#1a3450");
 const TRACE_HIGH = new THREE.Color("#2b8f88");
 const DEEP_FADE = new THREE.Color("#03060d");
-const PIN_COLOR = new THREE.Color("#2a4f63");
-const PIN_DEEP = new THREE.Color("#06141c");
+/** Pads/vias sit a step brighter than routing — the "populated" points on an otherwise bare board. */
+const PAD_COLOR = new THREE.Color("#2a4f63");
+const PAD_DEEP = new THREE.Color("#06141c");
 const ACCENT = new THREE.Color("#2dd4bf");
 const WHITE = new THREE.Color(1, 1, 1);
 const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
@@ -153,9 +144,7 @@ interface LayerRecord {
   z: number;
   lineMat: THREE.LineBasicMaterial;
   baseLineOpacity: number;
-  pinColor: THREE.Color;
-  pinMat?: THREE.LineBasicMaterial;
-  basePinOpacity: number;
+  padColor: THREE.Color;
   padMat?: THREE.PointsMaterial;
   basePadOpacity: number;
 }
@@ -294,83 +283,16 @@ export default function Circuit3D({ className }: { className?: string }) {
       const lines = new THREE.LineSegments(lineGeo, lineMat);
       rig.add(lines);
 
-      // populated components — real solid packages standing proud of the
-      // board, not wireframe outlines. Each chip/passive's box is baked
-      // with its own transform then merged into one draw call per layer.
-      const pinColor = PIN_COLOR.clone().lerp(PIN_DEEP, depthT * 0.6);
-      const pinOpacity = 0.68 - depthT * 0.3;
-      const chipGeos: THREE.BufferGeometry[] = [];
-      const pinPositions: number[] = [];
-      for (const chip of layout.chips) {
-        const geo = new THREE.BoxGeometry(chip.w * WORLD_SCALE, chip.h * WORLD_SCALE, CHIP_RISE);
-        const cx = (chip.x + chip.w / 2 - 700) * WORLD_SCALE;
-        const cy = (450 - (chip.y + chip.h / 2)) * WORLD_SCALE;
-        const cz = surfaceZ + CHIP_RISE / 2;
-        geo.translate(cx, cy, cz);
-        chipGeos.push(geo);
-        for (const pin of chip.pins) {
-          pinPositions.push(...toWorld(pin.x1, pin.y1, surfaceZ), ...toWorld(pin.x2, pin.y2, surfaceZ));
-        }
-      }
-      if (chipGeos.length > 0) {
-        const merged = mergeGeometries(chipGeos, false);
-        chipGeos.forEach((g) => g.dispose());
-        if (merged) {
-          const chipMat = new THREE.MeshStandardMaterial({
-            color: CHIP_PLASTIC,
-            roughness: 0.5,
-            metalness: 0.2,
-          });
-          rig.add(new THREE.Mesh(merged, chipMat));
-        }
-      }
-
-      const passiveGeos: THREE.BufferGeometry[] = [];
-      for (const passive of layout.passives) {
-        const { x, y, angle, length, width: pw } = passive;
-        const geo = new THREE.BoxGeometry(length * WORLD_SCALE, pw * WORLD_SCALE, PASSIVE_RISE);
-        geo.rotateZ(angle);
-        const cx = (x - 700) * WORLD_SCALE;
-        const cy = (450 - y) * WORLD_SCALE;
-        const cz = surfaceZ + PASSIVE_RISE / 2;
-        geo.translate(cx, cy, cz);
-        passiveGeos.push(geo);
-      }
-      if (passiveGeos.length > 0) {
-        const merged = mergeGeometries(passiveGeos, false);
-        passiveGeos.forEach((g) => g.dispose());
-        if (merged) {
-          const passiveMat = new THREE.MeshStandardMaterial({
-            color: PASSIVE_COLOR,
-            roughness: 0.6,
-            metalness: 0.1,
-          });
-          rig.add(new THREE.Mesh(merged, passiveMat));
-        }
-      }
-
-      let pinMat: THREE.LineBasicMaterial | undefined;
-      if (pinPositions.length > 0) {
-        const pinGeo = new THREE.BufferGeometry();
-        pinGeo.setAttribute("position", new THREE.Float32BufferAttribute(pinPositions, 3));
-        pinMat = new THREE.LineBasicMaterial({
-          color: pinColor,
-          transparent: true,
-          opacity: pinOpacity,
-          fog: true,
-        });
-        rig.add(new THREE.LineSegments(pinGeo, pinMat));
-      }
-
+      // pads/vias — the only other routing detail, a step brighter than
+      // the traces themselves, riding the same raised surface
+      const padColor = PAD_COLOR.clone().lerp(PAD_DEEP, depthT * 0.6);
+      const padOpacity = 0.68 - depthT * 0.3;
       const padPositions: number[] = [];
       for (const pad of layout.pads) {
         padPositions.push(...toWorld(pad.x, pad.y, surfaceZ));
       }
       for (const via of layout.vias) {
         padPositions.push(...toWorld(via.x, via.y, surfaceZ));
-      }
-      for (const chip of layout.chips) {
-        padPositions.push(...toWorld(chip.dot.x, chip.dot.y, surfaceZ + CHIP_RISE));
       }
       let padMat: THREE.PointsMaterial | undefined;
       if (padPositions.length > 0) {
@@ -379,9 +301,9 @@ export default function Circuit3D({ className }: { className?: string }) {
         padMat = new THREE.PointsMaterial({
           size: 0.045,
           map: glowTex,
-          color: pinColor,
+          color: padColor,
           transparent: true,
-          opacity: pinOpacity,
+          opacity: padOpacity,
           depthWrite: false,
           blending: THREE.AdditiveBlending,
           sizeAttenuation: true,
@@ -393,11 +315,9 @@ export default function Circuit3D({ className }: { className?: string }) {
         z: surfaceZ,
         lineMat,
         baseLineOpacity: layerOpacity,
-        pinColor,
-        pinMat,
-        basePinOpacity: pinOpacity,
+        padColor,
         padMat,
-        basePadOpacity: pinOpacity,
+        basePadOpacity: padOpacity,
       });
     }
 
@@ -547,24 +467,20 @@ export default function Circuit3D({ className }: { className?: string }) {
       if (bloomPass) bloomPass.strength = baseBloomStrength + speedGlow * 0.15;
 
       // only the live copper energizes as the camera's depth crosses a
-      // layer — brighter, warmer toward turquoise. The slabs and chip
-      // packages never change color under motion, only the routing does; a
-      // physical board doesn't shift hue because the camera moved, only
-      // the light already on it does that (handled by the fixed key light
-      // as the rig slowly turns).
+      // layer — brighter, warmer toward turquoise. The slab itself never
+      // changes color under motion, only the routing does; a physical
+      // board doesn't shift hue because the camera moved, only the light
+      // already on it does that (handled by the fixed key light as the
+      // rig slowly turns).
       for (const layer of layerRecords) {
         const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
         const w = raw * raw * (3 - 2 * raw);
         const surge = w + speedGlow * 0.08;
         layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.28;
         layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.28));
-        if (layer.pinMat) {
-          layer.pinMat.opacity = layer.basePinOpacity + surge * 0.24;
-          layer.pinMat.color.copy(layer.pinColor).lerp(ACCENT, Math.min(1, surge * 0.28));
-        }
         if (layer.padMat) {
           layer.padMat.opacity = layer.basePadOpacity + surge * 0.3;
-          layer.padMat.color.copy(layer.pinColor).lerp(ACCENT, Math.min(1, surge * 0.28));
+          layer.padMat.color.copy(layer.padColor).lerp(ACCENT, Math.min(1, surge * 0.28));
         }
       }
 
