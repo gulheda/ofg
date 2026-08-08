@@ -5,23 +5,31 @@ import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { generatePcb } from "@/lib/pcb/generate";
 import type { PcbLayout, Point } from "@/lib/pcb/types";
 
 /**
  * A real WebGL scene, not a flat picture of one: an exploded-view multi-
  * layer PCB stack floating in depth, the way a datasheet's assembly diagram
- * separates copper layers to show how they route past each other. No other
- * objects share the scene — the board itself is the whole show, so scroll
- * is a straight dive through its copper layers rather than a tour past a
- * sequence of exhibits.
+ * separates copper layers to show how they route past each other. Every
+ * layer is a real lit solid — a navy solder-mask slab with actual chip
+ * packages standing proud of its surface — not just wireframe lines, so it
+ * reads as a rendered board under light rather than a schematic drawing.
+ * Routing (traces, pads, pin stubs) stays as thin lines riding just above
+ * each slab's surface, the cheap part; the board body and its populated
+ * components are real geometry catching a fixed key light as the stack
+ * slowly turns, which is what actually sells "solid 3D object" over a flat
+ * wireframe ever could.
  *
- * As the camera's depth crosses each layer, that layer energizes — brighter,
- * warmer toward turquoise — so passing through reads as entering that
- * layer's depth. And the world itself darkens as you go: the background and
- * fog deepen from navy toward near-black across the full scroll, and the
- * fog closes in slightly, so reaching the bottom of the page feels like
- * having descended somewhere else entirely, not just having scrolled.
+ * As the camera's depth crosses each layer, that layer's routing energizes
+ * — brighter, warmer toward turquoise — so passing through reads as
+ * entering that layer's depth. The board material itself never changes
+ * color under motion, only the live copper does — a physical slab doesn't
+ * change hue because you scrolled past it. And the world itself darkens as
+ * you go: background and fog deepen from navy toward near-black across the
+ * full scroll, so reaching the bottom feels like having descended
+ * somewhere else entirely.
  */
 
 const LAYER_COUNT_DESKTOP = 4;
@@ -29,26 +37,36 @@ const LAYER_COUNT_MOBILE = 2;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
 
+/** How far routing/components stand off the slab's face, and how thick the slab itself is. */
+const BOARD_THICKNESS = 0.05;
+const SURFACE_OFFSET = BOARD_THICKNESS / 2 + 0.012;
+const CHIP_RISE = 0.09;
+const PASSIVE_RISE = 0.05;
+
 /** The resting state — dark night-blue, darker than before. */
 const BG_COLOR = new THREE.Color(0x05091a);
 /** Where the world lands by the time you've scrolled to the bottom — nearly black. */
 const BG_DEEP_COLOR = new THREE.Color(0x010204);
 
+/** The board substrate itself — a genuine navy solder-mask blue, not a scene tint. */
+const SLAB_NEAR = new THREE.Color("#16294d");
+const SLAB_FAR = new THREE.Color("#050b18");
+/** IC packages: dark plastic with a faint sheen, not pure black. */
+const CHIP_PLASTIC = new THREE.Color("#0b0e17");
+/** Passive component bodies — a step lighter, still in the same cool family. */
+const PASSIVE_COLOR = new THREE.Color("#3d5670");
+
 /**
  * Traces get real per-net variety instead of one flat tone, but blue stays
  * the dominant read — only a minority of nets (the high end of the tint
  * curve) actually reach turquoise, the way an accent color should read as
- * an accent rather than the default. Populated features (chip footprints,
- * passives, pads, vias) sit a step brighter than that, so components read
- * as "on top of" the routing the way silkscreen and copper read as
- * distinct layers on a real board. Everything runs darker than earlier
- * passes — this reads as night-blue at rest and in motion, not lit up.
+ * an accent rather than the default.
  */
 const TRACE_LOW = new THREE.Color("#1a3450");
 const TRACE_HIGH = new THREE.Color("#2b8f88");
 const DEEP_FADE = new THREE.Color("#03060d");
-const FEATURE_COLOR = new THREE.Color("#2a4f63");
-const FEATURE_DEEP = new THREE.Color("#06141c");
+const PIN_COLOR = new THREE.Color("#2a4f63");
+const PIN_DEEP = new THREE.Color("#06141c");
 const ACCENT = new THREE.Color("#2dd4bf");
 const WHITE = new THREE.Color(1, 1, 1);
 const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
@@ -130,14 +148,14 @@ interface Mote {
   phase: number;
 }
 
-/** One PCB layer's materials, tracked so the layer can energize as the camera passes through its depth. */
+/** One PCB layer's materials, tracked so its live routing can energize as the camera passes through its depth. */
 interface LayerRecord {
   z: number;
   lineMat: THREE.LineBasicMaterial;
   baseLineOpacity: number;
-  featureColor: THREE.Color;
-  featureMat?: THREE.LineBasicMaterial;
-  baseFeatureOpacity: number;
+  pinColor: THREE.Color;
+  pinMat?: THREE.LineBasicMaterial;
+  basePinOpacity: number;
   padMat?: THREE.PointsMaterial;
   basePadOpacity: number;
 }
@@ -172,6 +190,19 @@ export default function Circuit3D({ className }: { className?: string }) {
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 40);
     camera.position.set(0, 0, 6.5);
+
+    // a fixed key + fill light, not attached to the rig — as the stack
+    // slowly turns (idle drift + pointer parallax), the light stays put in
+    // world space so highlights actually slide across the slabs and chip
+    // packages, the single strongest "this is solid" cue a wireframe can't
+    // give
+    scene.add(new THREE.AmbientLight(0x1a2f4a, 0.65));
+    const keyLight = new THREE.DirectionalLight(0xdcefff, 1.1);
+    keyLight.position.set(4, 6, 7);
+    scene.add(keyLight);
+    const fillLight = new THREE.DirectionalLight(0x1f3a5f, 0.4);
+    fillLight.position.set(-5, -3, -3);
+    scene.add(fillLight);
 
     // bloom's multi-pass blur chain is the single most expensive thing in
     // this scene — skip it on mobile entirely rather than tune it down,
@@ -216,30 +247,44 @@ export default function Circuit3D({ className }: { className?: string }) {
       });
 
       const z = -li * LAYER_SPACING * WORLD_SCALE;
+      const surfaceZ = z + SURFACE_OFFSET;
       const depthT = li / Math.max(1, layerCount - 1);
-      // more present than before — the board is the whole scene now, it
-      // needs to read clearly rather than fade into a faint backdrop
-      const layerOpacity = 0.56 - depthT * 0.32;
-      const featureColor = FEATURE_COLOR.clone().lerp(FEATURE_DEEP, depthT * 0.6);
-      const featureOpacity = 0.66 - depthT * 0.3;
+
+      // the board itself — a real lit slab, a genuine navy solder-mask
+      // color rather than a scene-wide tint, sized to the routed area so
+      // it reads as the physical substrate everything else sits on
+      const slabColor = SLAB_NEAR.clone().lerp(SLAB_FAR, depthT * 0.7);
+      const slabMat = new THREE.MeshStandardMaterial({
+        color: slabColor,
+        roughness: 0.78,
+        metalness: 0.12,
+        transparent: true,
+        opacity: 0.62 - depthT * 0.22,
+      });
+      const slabGeo = new THREE.BoxGeometry(1400 * WORLD_SCALE, 900 * WORLD_SCALE, BOARD_THICKNESS);
+      const slab = new THREE.Mesh(slabGeo, slabMat);
+      slab.position.set(0, 0, z);
+      rig.add(slab);
 
       // nets — each trace keeps its own tint instead of one flat layer
-      // color, so a board reads as many individual routed nets
+      // color, so a board reads as many individual routed nets. Riding
+      // just above the slab's face, not embedded in it.
       const positions: number[] = [];
       const colors: number[] = [];
       for (const trace of layout.traces) {
-        layerTraces.push({ points: trace.points, z });
+        layerTraces.push({ points: trace.points, z: surfaceZ });
         const c = traceColor(trace.tint, depthT);
         for (let i = 1; i < trace.points.length; i++) {
           const a = trace.points[i - 1];
           const b = trace.points[i];
-          positions.push(...toWorld(a.x, a.y, z), ...toWorld(b.x, b.y, z));
+          positions.push(...toWorld(a.x, a.y, surfaceZ), ...toWorld(b.x, b.y, surfaceZ));
           colors.push(c.r, c.g, c.b, c.r, c.g, c.b);
         }
       }
       const lineGeo = new THREE.BufferGeometry();
       lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
       lineGeo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+      const layerOpacity = 0.62 - depthT * 0.3;
       const lineMat = new THREE.LineBasicMaterial({
         vertexColors: true,
         transparent: true,
@@ -247,75 +292,85 @@ export default function Circuit3D({ className }: { className?: string }) {
         fog: true,
       });
       const lines = new THREE.LineSegments(lineGeo, lineMat);
-      // each layer sits at a slightly different angle, like plates pulled apart
-      // from an assembled stack rather than perfectly parallel sheets
-      lines.rotation.x = (li - layerCount / 2) * 0.015;
-      lines.rotation.y = (li % 2 === 0 ? 1 : -1) * 0.02;
       rig.add(lines);
 
-      // populated features — IC footprints (body + pin stubs) and passive
-      // bodies, the detail that was already in the generator's data but
-      // never actually drawn; this is what makes a layer read as a real
-      // assembled board instead of a bare unpopulated trace print
-      const featurePositions: number[] = [];
+      // populated components — real solid packages standing proud of the
+      // board, not wireframe outlines. Each chip/passive's box is baked
+      // with its own transform then merged into one draw call per layer.
+      const pinColor = PIN_COLOR.clone().lerp(PIN_DEEP, depthT * 0.6);
+      const pinOpacity = 0.68 - depthT * 0.3;
+      const chipGeos: THREE.BufferGeometry[] = [];
+      const pinPositions: number[] = [];
       for (const chip of layout.chips) {
-        const { x, y, w, h } = chip;
-        const corners: [number, number][] = [
-          [x, y],
-          [x + w, y],
-          [x + w, y + h],
-          [x, y + h],
-        ];
-        for (let i = 0; i < 4; i++) {
-          const a = corners[i];
-          const b = corners[(i + 1) % 4];
-          featurePositions.push(...toWorld(a[0], a[1], z), ...toWorld(b[0], b[1], z));
-        }
+        const geo = new THREE.BoxGeometry(chip.w * WORLD_SCALE, chip.h * WORLD_SCALE, CHIP_RISE);
+        const cx = (chip.x + chip.w / 2 - 700) * WORLD_SCALE;
+        const cy = (450 - (chip.y + chip.h / 2)) * WORLD_SCALE;
+        const cz = surfaceZ + CHIP_RISE / 2;
+        geo.translate(cx, cy, cz);
+        chipGeos.push(geo);
         for (const pin of chip.pins) {
-          featurePositions.push(...toWorld(pin.x1, pin.y1, z), ...toWorld(pin.x2, pin.y2, z));
+          pinPositions.push(...toWorld(pin.x1, pin.y1, surfaceZ), ...toWorld(pin.x2, pin.y2, surfaceZ));
         }
       }
+      if (chipGeos.length > 0) {
+        const merged = mergeGeometries(chipGeos, false);
+        chipGeos.forEach((g) => g.dispose());
+        if (merged) {
+          const chipMat = new THREE.MeshStandardMaterial({
+            color: CHIP_PLASTIC,
+            roughness: 0.5,
+            metalness: 0.2,
+          });
+          rig.add(new THREE.Mesh(merged, chipMat));
+        }
+      }
+
+      const passiveGeos: THREE.BufferGeometry[] = [];
       for (const passive of layout.passives) {
         const { x, y, angle, length, width: pw } = passive;
-        const cos = Math.cos(angle);
-        const sin = Math.sin(angle);
-        const hl = length / 2;
-        const hw = pw / 2;
-        const local: [number, number][] = [
-          [-hl, -hw],
-          [hl, -hw],
-          [hl, hw],
-          [-hl, hw],
-        ];
-        const corners = local.map(([lx, ly]): [number, number] => [x + lx * cos - ly * sin, y + lx * sin + ly * cos]);
-        for (let i = 0; i < 4; i++) {
-          const a = corners[i];
-          const b = corners[(i + 1) % 4];
-          featurePositions.push(...toWorld(a[0], a[1], z), ...toWorld(b[0], b[1], z));
+        const geo = new THREE.BoxGeometry(length * WORLD_SCALE, pw * WORLD_SCALE, PASSIVE_RISE);
+        geo.rotateZ(angle);
+        const cx = (x - 700) * WORLD_SCALE;
+        const cy = (450 - y) * WORLD_SCALE;
+        const cz = surfaceZ + PASSIVE_RISE / 2;
+        geo.translate(cx, cy, cz);
+        passiveGeos.push(geo);
+      }
+      if (passiveGeos.length > 0) {
+        const merged = mergeGeometries(passiveGeos, false);
+        passiveGeos.forEach((g) => g.dispose());
+        if (merged) {
+          const passiveMat = new THREE.MeshStandardMaterial({
+            color: PASSIVE_COLOR,
+            roughness: 0.6,
+            metalness: 0.1,
+          });
+          rig.add(new THREE.Mesh(merged, passiveMat));
         }
       }
-      let featureMat: THREE.LineBasicMaterial | undefined;
-      if (featurePositions.length > 0) {
-        const featureGeo = new THREE.BufferGeometry();
-        featureGeo.setAttribute("position", new THREE.Float32BufferAttribute(featurePositions, 3));
-        featureMat = new THREE.LineBasicMaterial({
-          color: featureColor,
+
+      let pinMat: THREE.LineBasicMaterial | undefined;
+      if (pinPositions.length > 0) {
+        const pinGeo = new THREE.BufferGeometry();
+        pinGeo.setAttribute("position", new THREE.Float32BufferAttribute(pinPositions, 3));
+        pinMat = new THREE.LineBasicMaterial({
+          color: pinColor,
           transparent: true,
-          opacity: featureOpacity,
+          opacity: pinOpacity,
           fog: true,
         });
-        rig.add(new THREE.LineSegments(featureGeo, featureMat));
+        rig.add(new THREE.LineSegments(pinGeo, pinMat));
       }
 
       const padPositions: number[] = [];
       for (const pad of layout.pads) {
-        padPositions.push(...toWorld(pad.x, pad.y, z));
+        padPositions.push(...toWorld(pad.x, pad.y, surfaceZ));
       }
       for (const via of layout.vias) {
-        padPositions.push(...toWorld(via.x, via.y, z));
+        padPositions.push(...toWorld(via.x, via.y, surfaceZ));
       }
       for (const chip of layout.chips) {
-        padPositions.push(...toWorld(chip.dot.x, chip.dot.y, z));
+        padPositions.push(...toWorld(chip.dot.x, chip.dot.y, surfaceZ + CHIP_RISE));
       }
       let padMat: THREE.PointsMaterial | undefined;
       if (padPositions.length > 0) {
@@ -324,9 +379,9 @@ export default function Circuit3D({ className }: { className?: string }) {
         padMat = new THREE.PointsMaterial({
           size: 0.045,
           map: glowTex,
-          color: featureColor,
+          color: pinColor,
           transparent: true,
-          opacity: featureOpacity,
+          opacity: pinOpacity,
           depthWrite: false,
           blending: THREE.AdditiveBlending,
           sizeAttenuation: true,
@@ -335,14 +390,14 @@ export default function Circuit3D({ className }: { className?: string }) {
       }
 
       layerRecords.push({
-        z,
+        z: surfaceZ,
         lineMat,
         baseLineOpacity: layerOpacity,
-        featureColor,
-        featureMat,
-        baseFeatureOpacity: featureOpacity,
+        pinColor,
+        pinMat,
+        basePinOpacity: pinOpacity,
         padMat,
-        basePadOpacity: featureOpacity,
+        basePadOpacity: pinOpacity,
       });
     }
 
@@ -491,27 +546,25 @@ export default function Circuit3D({ className }: { className?: string }) {
       // Kept subtle — motion should still read as night-blue, not lit up.
       if (bloomPass) bloomPass.strength = baseBloomStrength + speedGlow * 0.15;
 
-      // each PCB layer energizes as the camera's depth crosses it — brighter
-      // and warmer toward turquoise right at the moment of passing through,
-      // so scrolling reads as diving into the board's depths one copper
-      // layer at a time, not sliding past a flat, static backdrop. Eased
-      // rather than linear, so the crossing itself feels considered rather
-      // than a mechanical ramp. Fast scrolling also lifts every layer at
-      // once, but gently — this is a faint highlight on top of a dark blue
-      // scene, not a wholesale color shift.
+      // only the live copper energizes as the camera's depth crosses a
+      // layer — brighter, warmer toward turquoise. The slabs and chip
+      // packages never change color under motion, only the routing does; a
+      // physical board doesn't shift hue because the camera moved, only
+      // the light already on it does that (handled by the fixed key light
+      // as the rig slowly turns).
       for (const layer of layerRecords) {
         const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
         const w = raw * raw * (3 - 2 * raw);
         const surge = w + speedGlow * 0.08;
         layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.28;
         layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.28));
-        if (layer.featureMat) {
-          layer.featureMat.opacity = layer.baseFeatureOpacity + surge * 0.24;
-          layer.featureMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.28));
+        if (layer.pinMat) {
+          layer.pinMat.opacity = layer.basePinOpacity + surge * 0.24;
+          layer.pinMat.color.copy(layer.pinColor).lerp(ACCENT, Math.min(1, surge * 0.28));
         }
         if (layer.padMat) {
           layer.padMat.opacity = layer.basePadOpacity + surge * 0.3;
-          layer.padMat.color.copy(layer.featureColor).lerp(ACCENT, Math.min(1, surge * 0.28));
+          layer.padMat.color.copy(layer.pinColor).lerp(ACCENT, Math.min(1, surge * 0.28));
         }
       }
 
@@ -578,7 +631,12 @@ export default function Circuit3D({ className }: { className?: string }) {
       bloomPass?.dispose();
       renderer.dispose();
       scene.traverse((obj) => {
-        if (obj instanceof THREE.Points || obj instanceof THREE.Line || obj instanceof THREE.LineSegments) {
+        if (
+          obj instanceof THREE.Points ||
+          obj instanceof THREE.Line ||
+          obj instanceof THREE.LineSegments ||
+          obj instanceof THREE.Mesh
+        ) {
           obj.geometry.dispose();
           const mat = obj.material;
           if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
