@@ -23,11 +23,13 @@ const randInt = (rng: () => number, min: number, max: number) =>
   min + Math.floor(rng() * (max - min + 1));
 
 /**
- * Replace 90° corners of an orthogonal polyline with 45° chamfers —
- * the classic PCB routing style (orthogonal runs, mitred corners).
+ * Replace 90° corners of an orthogonal polyline with smooth rounded
+ * corners — a quadratic-bezier arc through each bend instead of a sharp
+ * mitred cut, closer to how traces actually get routed on a real board.
  */
 function chamfer(waypoints: Point[], cut: number): Point[] {
   if (waypoints.length < 3) return waypoints;
+  const ARC_SEGMENTS = 6;
   const out: Point[] = [waypoints[0]];
   for (let i = 1; i < waypoints.length - 1; i++) {
     const prev = waypoints[i - 1];
@@ -38,10 +40,16 @@ function chamfer(waypoints: Point[], cut: number): Point[] {
     const c = Math.min(cut, inLen / 2, outLen / 2);
     const inDir = { x: (curr.x - prev.x) / inLen, y: (curr.y - prev.y) / inLen };
     const outDir = { x: (next.x - curr.x) / outLen, y: (next.y - curr.y) / outLen };
-    out.push(
-      { x: curr.x - inDir.x * c, y: curr.y - inDir.y * c },
-      { x: curr.x + outDir.x * c, y: curr.y + outDir.y * c },
-    );
+    const p1 = { x: curr.x - inDir.x * c, y: curr.y - inDir.y * c };
+    const p2 = { x: curr.x + outDir.x * c, y: curr.y + outDir.y * c };
+    for (let s = 0; s <= ARC_SEGMENTS; s++) {
+      const t = s / ARC_SEGMENTS;
+      const mt = 1 - t;
+      out.push({
+        x: mt * mt * p1.x + 2 * mt * t * curr.x + t * t * p2.x,
+        y: mt * mt * p1.y + 2 * mt * t * curr.y + t * t * p2.y,
+      });
+    }
   }
   out.push(waypoints[waypoints.length - 1]);
   return out;

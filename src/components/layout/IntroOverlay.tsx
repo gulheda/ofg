@@ -40,7 +40,7 @@ export default function IntroOverlay() {
           <motion.span
             aria-hidden="true"
             className="h-[2px] w-2/3 max-w-xs rounded-full bg-accent"
-            style={{ boxShadow: "0 0 18px 3px rgba(45,212,191,0.75)" }}
+            style={{ boxShadow: "0 0 18px 3px rgba(59,130,246,0.75)" }}
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
             transition={{

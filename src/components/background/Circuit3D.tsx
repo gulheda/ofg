@@ -5,22 +5,22 @@ import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { generatePcb } from "@/lib/pcb/generate";
 import type { PcbLayout, Point } from "@/lib/pcb/types";
 
 /**
  * A real WebGL scene, not a flat picture of one: an exploded-view multi-
  * layer PCB stack floating in depth, the way a datasheet's assembly diagram
- * separates copper layers to show how they route past each other. Just the
- * circuit itself — a real lit navy solder-mask slab per layer with live
- * routing on top, nothing populated on it, no extra objects competing for
- * attention. The board body is real geometry catching a fixed key light as
- * the stack slowly turns, which is what sells "solid 3D object" over flat
- * wireframe lines alone; the routing on top of it is what moves.
+ * separates copper layers to show how they route past each other. A real
+ * lit navy slab per layer with live routing and simple chip packages on
+ * top of it — the board body is real geometry catching a fixed key light
+ * as the stack slowly turns, which is what sells "solid 3D object" over
+ * flat wireframe lines alone.
  *
  * As the camera's depth crosses each layer, that layer's routing energizes
- * — brighter, warmer toward turquoise — so passing through reads as
- * entering that layer's depth. The board material itself never changes
+ * — brighter, more saturated blue — so passing through reads as entering
+ * that layer's depth. The board and chip materials themselves never change
  * color under motion, only the live copper does — a physical slab doesn't
  * change hue because you scrolled past it. And the world itself darkens as
  * you go: background and fog deepen from navy toward near-black across the
@@ -33,40 +33,40 @@ const LAYER_COUNT_MOBILE = 2;
 const LAYER_SPACING = 260;
 const WORLD_SCALE = 1 / 110;
 
-/** How far routing stands off the slab's face, and how thick the slab itself is. */
+/** How far routing/components stand off the slab's face, and how thick the slab itself is. */
 const BOARD_THICKNESS = 0.05;
 const SURFACE_OFFSET = BOARD_THICKNESS / 2 + 0.012;
+const CHIP_RISE = 0.08;
 
 /** The resting state — dark night-blue, darker than before. */
 const BG_COLOR = new THREE.Color(0x05091a);
 /** Where the world lands by the time you've scrolled to the bottom — nearly black. */
 const BG_DEEP_COLOR = new THREE.Color(0x010204);
 
-/** The board substrate itself — a genuine navy solder-mask blue, not a scene tint. */
-const SLAB_NEAR = new THREE.Color("#16294d");
-const SLAB_FAR = new THREE.Color("#050b18");
+/** The board substrate itself — a genuine navy blue, not a scene tint. */
+const SLAB_NEAR = new THREE.Color("#16234a");
+const SLAB_FAR = new THREE.Color("#070c1f");
+/** Chip packages — a step brighter, the same royal-blue family as the site's accent. */
+const CHIP_COLOR = new THREE.Color("#2c4a8f");
+const CHIP_DEEP = new THREE.Color("#0c1638");
 
 /**
- * Traces get real per-net variety instead of one flat tone, but blue stays
- * the dominant read — only a minority of nets (the high end of the tint
- * curve) actually reach turquoise, the way an accent color should read as
- * an accent rather than the default.
+ * Traces get real per-net variety instead of one flat tone, all within the
+ * one royal-blue family the rest of the site uses — some nets read dim and
+ * structural, others closer to the bright accent, but nothing shifts hue.
  */
-const TRACE_LOW = new THREE.Color("#1a3450");
-const TRACE_HIGH = new THREE.Color("#2b8f88");
-const DEEP_FADE = new THREE.Color("#03060d");
+const TRACE_LOW = new THREE.Color("#24427a");
+const TRACE_HIGH = new THREE.Color("#5b8cf0");
+const DEEP_FADE = new THREE.Color("#050b1c");
 /** Pads/vias sit a step brighter than routing — the "populated" points on an otherwise bare board. */
-const PAD_COLOR = new THREE.Color("#2a4f63");
-const PAD_DEEP = new THREE.Color("#06141c");
-const ACCENT = new THREE.Color("#2dd4bf");
+const PAD_COLOR = new THREE.Color("#3a5fac");
+const PAD_DEEP = new THREE.Color("#0d1a3a");
+const ACCENT = new THREE.Color("#3b82f6");
 const WHITE = new THREE.Color(1, 1, 1);
 const MOTE_GLYPHS = ["Ω", "V", "A", "Hz", "dB", "kΩ", "μF", "0x3F"];
 
 function traceColor(tint: number, depthT: number): THREE.Color {
-  // bias toward the blue end — most nets stay blue, only the highest-tint
-  // ones actually reach turquoise
-  const biased = Math.pow(tint, 1.8);
-  return TRACE_LOW.clone().lerp(TRACE_HIGH, biased).lerp(DEEP_FADE, depthT * 0.6);
+  return TRACE_LOW.clone().lerp(TRACE_HIGH, tint).lerp(DEEP_FADE, depthT * 0.6);
 }
 
 function buildGlowTexture(): THREE.Texture {
@@ -138,9 +138,9 @@ function buildGlyphTexture(glyph: string): THREE.Texture {
   ctx.font = "600 48px ui-monospace, 'JetBrains Mono', monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.shadowColor = "rgba(45,212,191,0.6)";
+  ctx.shadowColor = "rgba(59,130,246,0.6)";
   ctx.shadowBlur = 12;
-  ctx.fillStyle = "#7ce8d8";
+  ctx.fillStyle = "#8fb4fb";
   ctx.fillText(glyph, size / 2, size / 2 + 2);
   const tex = new THREE.CanvasTexture(canvas);
   tex.needsUpdate = true;
@@ -328,6 +328,46 @@ export default function Circuit3D({ className }: { className?: string }) {
       });
       const lines = new THREE.LineSegments(lineGeo, lineMat);
       rig.add(lines);
+
+      // chip packages — simple solid bodies with a few short pin legs,
+      // standing proud of the board surface. Every chip's box is baked
+      // with its own transform then merged into one draw call per layer.
+      const chipColor = CHIP_COLOR.clone().lerp(CHIP_DEEP, depthT * 0.6);
+      const chipGeos: THREE.BufferGeometry[] = [];
+      const pinPositions: number[] = [];
+      for (const chip of layout.chips) {
+        const geo = new THREE.BoxGeometry(chip.w * WORLD_SCALE, chip.h * WORLD_SCALE, CHIP_RISE);
+        const cx = (chip.x + chip.w / 2 - 700) * WORLD_SCALE;
+        const cy = (450 - (chip.y + chip.h / 2)) * WORLD_SCALE;
+        const cz = surfaceZ + CHIP_RISE / 2;
+        geo.translate(cx, cy, cz);
+        chipGeos.push(geo);
+        for (const pin of chip.pins) {
+          pinPositions.push(...toWorld(pin.x1, pin.y1, surfaceZ), ...toWorld(pin.x2, pin.y2, surfaceZ));
+        }
+      }
+      if (chipGeos.length > 0) {
+        const merged = mergeGeometries(chipGeos, false);
+        chipGeos.forEach((g) => g.dispose());
+        if (merged) {
+          const chipMat = new THREE.MeshStandardMaterial({
+            color: chipColor,
+            roughness: 0.4,
+            metalness: 0.35,
+          });
+          rig.add(new THREE.Mesh(merged, chipMat));
+        }
+      }
+      if (pinPositions.length > 0) {
+        const pinGeo = new THREE.BufferGeometry();
+        pinGeo.setAttribute("position", new THREE.Float32BufferAttribute(pinPositions, 3));
+        rig.add(
+          new THREE.LineSegments(
+            pinGeo,
+            new THREE.LineBasicMaterial({ color: chipColor, transparent: true, opacity: 0.75, fog: true }),
+          ),
+        );
+      }
 
       // pads/vias — the only other routing detail, a step brighter than
       // the traces themselves, riding the same raised surface

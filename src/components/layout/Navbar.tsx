@@ -51,7 +51,7 @@ export default function Navbar() {
     >
       {/* the current running along the top edge — real scroll progress, not decoration */}
       <motion.div
-        className="absolute inset-x-0 top-0 h-[2px] origin-left bg-accent shadow-[0_0_6px_rgba(45,212,191,0.8)]"
+        className="absolute inset-x-0 top-0 h-[2px] origin-left bg-accent shadow-[0_0_6px_rgba(59,130,246,0.8)]"
         style={{ scaleX: progress }}
       />
 
@@ -104,7 +104,7 @@ export default function Navbar() {
                   {isActive && (
                     <motion.span
                       layoutId="nav-underline"
-                      className="absolute inset-x-0 -bottom-0.5 h-px bg-accent shadow-[0_0_6px_rgba(45,212,191,0.7)]"
+                      className="absolute inset-x-0 -bottom-0.5 h-px bg-accent shadow-[0_0_6px_rgba(59,130,246,0.7)]"
                       transition={
                         reducedMotion
                           ? { duration: 0 }

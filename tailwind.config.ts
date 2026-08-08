@@ -10,9 +10,9 @@ const config: Config = {
         card: "#0B1230",
         ink: "#E4E7EF",
         accent: {
-          DEFAULT: "#2DD4BF",
-          light: "#5EEAD4",
-          deep: "#0D9488",
+          DEFAULT: "#3B82F6",
+          light: "#60A5FA",
+          deep: "#2563EB",
         },
         gold: {
           DEFAULT: "#F5B242",
@@ -30,8 +30,8 @@ const config: Config = {
         content: "72rem",
       },
       boxShadow: {
-        glow: "0 0 40px -10px rgba(45,212,191,0.45)",
-        "glow-sm": "0 0 22px -8px rgba(45,212,191,0.35)",
+        glow: "0 0 40px -10px rgba(59,130,246,0.45)",
+        "glow-sm": "0 0 22px -8px rgba(59,130,246,0.35)",
       },
     },
   },
