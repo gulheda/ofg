@@ -86,6 +86,49 @@ function buildGlowTexture(): THREE.Texture {
   return tex;
 }
 
+/**
+ * The routing grid pitch, silkscreen-faint, tiled across every slab — the
+ * texture detail that makes a board read as a real fabricated object even
+ * standing still, not just a flat color with lines floating in front of it.
+ */
+function buildBoardTexture(): THREE.Texture {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, size, size);
+  const pitch = 32;
+  ctx.strokeStyle = "rgba(0,0,0,0.22)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= size; x += pitch) {
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, 0);
+    ctx.lineTo(x + 0.5, size);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= size; y += pitch) {
+    ctx.beginPath();
+    ctx.moveTo(0, y + 0.5);
+    ctx.lineTo(size, y + 0.5);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  for (let x = pitch / 2; x <= size; x += pitch) {
+    for (let y = pitch / 2; y <= size; y += pitch) {
+      ctx.beginPath();
+      ctx.arc(x, y, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.needsUpdate = true;
+  return tex;
+}
+
 function buildGlyphTexture(glyph: string): THREE.Texture {
   const size = 128;
   const canvas = document.createElement("canvas");
@@ -207,6 +250,8 @@ export default function Circuit3D({ className }: { className?: string }) {
     scene.add(rig);
 
     const glowTex = buildGlowTexture();
+    const boardTex = buildBoardTexture();
+    boardTex.repeat.set(1400 * WORLD_SCALE * 1.6, 900 * WORLD_SCALE * 1.6);
     const glyphTexCache = new Map<string, THREE.Texture>();
     const getGlyphTex = (g: string) => {
       let t = glyphTexCache.get(g);
@@ -245,6 +290,7 @@ export default function Circuit3D({ className }: { className?: string }) {
       const slabColor = SLAB_NEAR.clone().lerp(SLAB_FAR, depthT * 0.7);
       const slabMat = new THREE.MeshStandardMaterial({
         color: slabColor,
+        map: boardTex,
         roughness: 0.78,
         metalness: 0.12,
         transparent: true,
@@ -472,9 +518,11 @@ export default function Circuit3D({ className }: { className?: string }) {
       // board doesn't shift hue because the camera moved, only the light
       // already on it does that (handled by the fixed key light as the
       // rig slowly turns).
+      let nearestCross = 0;
       for (const layer of layerRecords) {
         const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
         const w = raw * raw * (3 - 2 * raw);
+        nearestCross = Math.max(nearestCross, w);
         const surge = w + speedGlow * 0.08;
         layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.28;
         layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.28));
@@ -482,6 +530,15 @@ export default function Circuit3D({ className }: { className?: string }) {
           layer.padMat.opacity = layer.basePadOpacity + surge * 0.3;
           layer.padMat.color.copy(layer.padColor).lerp(ACCENT, Math.min(1, surge * 0.28));
         }
+      }
+
+      // a wide-angle push right as the camera reaches a layer — the same
+      // "flying into it" trick a real flythrough camera uses, so crossing
+      // a layer's traces reads as entering them, not just passing a plane
+      const targetFov = 50 + nearestCross * 9;
+      if (Math.abs(camera.fov - targetFov) > 0.05) {
+        camera.fov += (targetFov - camera.fov) * 0.12;
+        camera.updateProjectionMatrix();
       }
 
       for (const p of pulses) {
@@ -560,6 +617,7 @@ export default function Circuit3D({ className }: { className?: string }) {
         }
       });
       glowTex.dispose();
+      boardTex.dispose();
       glyphTexCache.forEach((t) => t.dispose());
     };
   }, []);
