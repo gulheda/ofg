@@ -81,7 +81,7 @@ export default function Hero() {
               }
             }}
             id="hero-name"
-            className="bg-gradient-to-br from-white via-white to-accent-light bg-clip-text font-sans text-5xl font-light leading-[1.05] tracking-tight text-transparent sm:text-6xl md:text-7xl lg:text-8xl"
+            className="font-sans text-5xl font-light leading-[1.05] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl"
           >
             {site.name}
           </motion.h1>
