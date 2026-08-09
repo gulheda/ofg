@@ -28,11 +28,6 @@ import type { PcbLayout, Point } from "@/lib/pcb/types";
  * somewhere else entirely.
  */
 
-// dead-on at rest, matching the flat reference look — only the existing
-// pointer parallax and idle drift move the stack, no persistent tilt.
-const BASE_TILT_X = 0;
-const BASE_TILT_Y = 0;
-
 const LAYER_COUNT_DESKTOP = 5;
 const LAYER_COUNT_MOBILE = 3;
 const LAYER_SPACING = 260;
@@ -570,29 +565,17 @@ export default function Circuit3D({ className }: { className?: string }) {
       // through the board at speed rather than a flat, constant glow
       const speedGlow = Math.min(1, Math.abs(scrollVelocity) * 26);
 
-      if (!reducedMotion) {
-        rig.rotation.y = BASE_TILT_Y + Math.sin(liveElapsed / 14000) * 0.05 + pointerSmooth.x * 0.12;
-        rig.rotation.x = BASE_TILT_X + pointerSmooth.y * -0.08;
-      } else {
-        rig.rotation.y = BASE_TILT_Y + pointerSmooth.x * 0.12;
-        rig.rotation.x = BASE_TILT_X + pointerSmooth.y * -0.08;
-      }
-      // a slow independent drift on top of pointer parallax — two mismatched
-      // sine periods so the path never repeats predictably, like a camera
-      // operator's hand rather than a metronomic loop. Reduced-motion keeps
-      // this at zero so the frozen frame stays truly still.
-      const driftX = reducedMotion ? 0 : Math.sin(liveElapsed / 9000) * 0.18 + Math.sin(liveElapsed / 3700) * 0.05;
-      const driftY = reducedMotion ? 0 : Math.cos(liveElapsed / 11000) * 0.12;
+      // kept flat and dead-on, matching the reference image exactly — no
+      // rig tilt, no independent camera drift or roll. Only a small amount
+      // of position-only pointer parallax, which shifts the view without
+      // ever rotating the board plane into visible perspective.
+      rig.rotation.y = 0;
+      rig.rotation.x = 0;
 
-      camera.position.x = pointerSmooth.x * 0.35 + driftX;
-      camera.position.y = -pointerSmooth.y * 0.25 + driftY;
+      camera.position.x = pointerSmooth.x * 0.12;
+      camera.position.y = -pointerSmooth.y * 0.08;
       camera.position.z = 6.5 - scrollSmooth * totalDepth;
       camera.lookAt(0, 0, camera.position.z - 6.5);
-      // a whisper of roll riding the same drift — barely perceptible, but it
-      // breaks the "camera locked to rails" flatness a pure lookAt gives
-      if (!reducedMotion) {
-        camera.rotateZ(Math.sin(liveElapsed / 8000) * 0.012);
-      }
 
       // the world itself darkens as you descend — background and fog drift
       // from navy toward near-black, and the fog closes in a little, so the
@@ -615,11 +598,9 @@ export default function Circuit3D({ className }: { className?: string }) {
       // board doesn't shift hue because the camera moved, only the light
       // already on it does that (handled by the fixed key light as the
       // rig slowly turns).
-      let nearestCross = 0;
       for (const layer of layerRecords) {
         const raw = Math.max(0, 1 - Math.abs(layer.z - camera.position.z) / 1.3);
         const w = raw * raw * (3 - 2 * raw);
-        nearestCross = Math.max(nearestCross, w);
         const surge = w + speedGlow * 0.08;
         layer.lineMat.opacity = layer.baseLineOpacity + surge * 0.28;
         layer.lineMat.color.copy(WHITE).lerp(ACCENT, Math.min(1, surge * 0.28));
@@ -627,15 +608,6 @@ export default function Circuit3D({ className }: { className?: string }) {
           layer.padMat.opacity = layer.basePadOpacity + surge * 0.3;
           layer.padMat.color.copy(layer.padColor).lerp(ACCENT, Math.min(1, surge * 0.28));
         }
-      }
-
-      // a wide-angle push right as the camera reaches a layer — the same
-      // "flying into it" trick a real flythrough camera uses, so crossing
-      // a layer's traces reads as entering them, not just passing a plane
-      const targetFov = 50 + nearestCross * 9;
-      if (Math.abs(camera.fov - targetFov) > 0.05) {
-        camera.fov += (targetFov - camera.fov) * 0.12;
-        camera.updateProjectionMatrix();
       }
 
       for (const p of pulses) {
