@@ -28,12 +28,10 @@ import type { PcbLayout, Point } from "@/lib/pcb/types";
  * somewhere else entirely.
  */
 
-// a resting 3/4 tilt on the whole stack — without this the camera looks
-// almost dead down the Z axis, so even lit, shadowed geometry reads as a
-// flat poster in a still frame. This is what actually sells "3D" at a
-// glance, before any motion or parallax kicks in.
-const BASE_TILT_X = -0.24;
-const BASE_TILT_Y = 0.3;
+// dead-on at rest, matching the flat reference look — only the existing
+// pointer parallax and idle drift move the stack, no persistent tilt.
+const BASE_TILT_X = 0;
+const BASE_TILT_Y = 0;
 
 const LAYER_COUNT_DESKTOP = 5;
 const LAYER_COUNT_MOBILE = 3;
