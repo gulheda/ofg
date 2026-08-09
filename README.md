@@ -1,4 +1,4 @@
-# Ömer Faruk Gündüz — Kişisel Portfolyo
+#  — Kişisel Portfolyo
 
 Aviyonik sistemler ve PCB tasarımı odaklı bir Elektrik-Elektronik Mühendisliği öğrencisinin koyu temalı, premium kişisel portfolyo sitesi. İmza detayı: gerçek PCB topolojisinden esinlenen, fare ile etkileşimli, Canvas tabanlı arka plan.
 
