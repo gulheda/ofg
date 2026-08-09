@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { generatePcb } from "@/lib/pcb/generate";
 import type { PcbLayout, Point } from "@/lib/pcb/types";
@@ -257,15 +256,11 @@ export default function Circuit3D({ className }: { className?: string }) {
     fillLight.position.set(-5, -3, -3);
     scene.add(fillLight);
 
-    // bloom's multi-pass blur chain is the single most expensive thing in
-    // this scene — skip it on mobile entirely rather than tune it down,
-    // and keep it modest on desktop
-    const useBloom = !isMobile;
+    // bloom softens every bright edge into a halo — fine for a moody scene,
+    // but directly at odds with the crisp, flat reference look: traces,
+    // pads and text need hard edges, not glow. Off entirely.
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const baseBloomStrength = 0.32;
-    const bloomPass = useBloom ? new UnrealBloomPass(new THREE.Vector2(1, 1), baseBloomStrength, 0.4, 0.26) : null;
-    if (bloomPass) composer.addPass(bloomPass);
 
     const rig = new THREE.Group();
     scene.add(rig);
@@ -587,11 +582,6 @@ export default function Circuit3D({ className }: { className?: string }) {
       scene.fog!.color.copy(bgScratch);
       (scene.fog as THREE.Fog).far = THREE.MathUtils.lerp(15, 10, worldT);
 
-      // bloom itself flares up while the camera is moving fast — the board
-      // reads as "powering up" under motion instead of a fixed, static glow.
-      // Kept subtle — motion should still read as night-blue, not lit up.
-      if (bloomPass) bloomPass.strength = baseBloomStrength + speedGlow * 0.15;
-
       // only the live copper energizes as the camera's depth crosses a
       // layer — brighter, warmer toward turquoise. The slab itself never
       // changes color under motion, only the routing does; a physical
@@ -670,7 +660,6 @@ export default function Circuit3D({ className }: { className?: string }) {
       document.removeEventListener("visibilitychange", onVisibility);
       container.removeChild(renderer.domElement);
       composer.dispose();
-      bloomPass?.dispose();
       renderer.dispose();
       scene.traverse((obj) => {
         if (

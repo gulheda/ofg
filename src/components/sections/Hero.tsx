@@ -80,7 +80,6 @@ export default function Hero() {
                 );
               }
             }}
-            style={{ textShadow: "0 0 14px rgba(59,130,246,0.24)" }}
             id="hero-name"
             className="bg-gradient-to-br from-white via-white to-accent-light bg-clip-text font-sans text-5xl font-light leading-[1.05] tracking-tight text-transparent sm:text-6xl md:text-7xl lg:text-8xl"
           >
