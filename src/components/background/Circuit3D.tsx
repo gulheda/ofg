@@ -28,6 +28,13 @@ import type { PcbLayout, Point } from "@/lib/pcb/types";
  * somewhere else entirely.
  */
 
+// a resting 3/4 tilt on the whole stack — without this the camera looks
+// almost dead down the Z axis, so even lit, shadowed geometry reads as a
+// flat poster in a still frame. This is what actually sells "3D" at a
+// glance, before any motion or parallax kicks in.
+const BASE_TILT_X = -0.24;
+const BASE_TILT_Y = 0.3;
+
 const LAYER_COUNT_DESKTOP = 5;
 const LAYER_COUNT_MOBILE = 3;
 const LAYER_SPACING = 260;
@@ -566,11 +573,11 @@ export default function Circuit3D({ className }: { className?: string }) {
       const speedGlow = Math.min(1, Math.abs(scrollVelocity) * 26);
 
       if (!reducedMotion) {
-        rig.rotation.y = Math.sin(liveElapsed / 14000) * 0.05 + pointerSmooth.x * 0.12;
-        rig.rotation.x = pointerSmooth.y * -0.08;
+        rig.rotation.y = BASE_TILT_Y + Math.sin(liveElapsed / 14000) * 0.05 + pointerSmooth.x * 0.12;
+        rig.rotation.x = BASE_TILT_X + pointerSmooth.y * -0.08;
       } else {
-        rig.rotation.y = pointerSmooth.x * 0.12;
-        rig.rotation.x = pointerSmooth.y * -0.08;
+        rig.rotation.y = BASE_TILT_Y + pointerSmooth.x * 0.12;
+        rig.rotation.x = BASE_TILT_X + pointerSmooth.y * -0.08;
       }
       // a slow independent drift on top of pointer parallax — two mismatched
       // sine periods so the path never repeats predictably, like a camera
